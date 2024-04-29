@@ -14,7 +14,6 @@ function evaluator(info)
 
 % which test data will be loaded
 BaseName   = info.BaseName;
-hard_reset = false;
 
 %% SETUP
 originalPath = pwd;
@@ -82,9 +81,9 @@ for solverIDX = 1:nSolvers
   for condition = 1:nConditions
     cd([ dataPath, '/', ConditionFolder{condition} ])
     % load the checklist and parameters
-    load("checklist.mat")
-    load("params.mat")
-    load("evaluation.mat")
+    load("checklist.mat",  'checklist')
+    load("params.mat",     'params')
+    load("evaluation.mat", 'evaluation')
     if ~isfield(params, currSolver)
       params.(currSolver) = [];
       save("params","params", '-v7.3');
@@ -116,9 +115,13 @@ for solverIDX = 1:nSolvers
     if ~checklist.tuned.(currSolver)
       % select one or many cases at random
       caseFile = ['file',num2str(0,'%04d'),'.mat'];
-      load(caseFile);
+      load(caseFile,'result');
       %
-      params.(currSolver) = feval( [currSolver,'_tune'] , meta, info, result );
+      if info.print_all
+        params.(currSolver) = feval( [currSolver,'_tune_pretty'] , meta, info, result );
+      else
+        params.(currSolver) = feval( [currSolver,'_tune'] , meta, info, result );
+      end
       checklist.tuned.(currSolver) = true;
       save("params","params", '-v7.3');
       save("checklist","checklist");
