@@ -1,4 +1,4 @@
-function pars = Tikhonov_tune_pretty( meta, info, result )
+function pars = wMNE_tune_pretty( meta, info, result )
 % Tuning via Generalized Cross-Validation for wMNE, and additional
 % initialization routines.
 %
@@ -26,10 +26,10 @@ Rs     = zeros( size(alphas) );
 Ns     = zeros( size(alphas) );
 for q = 1:length(alphas)
   alpha = alphas(q);
-  [Nq, Rq] = Tikhonov_Lcurve( meta, result, pars, alpha );
+  [Nq, Rq] = wMNE_Lcurve( meta, result, pars, alpha );
   Ns(q) = Nq;
   Rs(q) = Rq;
-  %[Ns(q), Rs(q)] = Tikhonov_Lcurve( meta, result, pars, alpha );
+  %[Ns(q), Rs(q)] = wMNE_Lcurve( meta, result, pars, alpha );
 end
 
 figure()
@@ -40,7 +40,7 @@ grid on
 xlabel('$\log \Vert G\,J_\lambda - Y \Vert_2^2 $','Interpreter','latex')
 ylabel('$\log \Vert J_\lambda \Vert_2^2$','Interpreter','latex')
 hold on
-for aa = 10.^(-5:1:5)
+for aa = 10.^(-10:1:10)
   [~,qidx] = min( abs(alphas-aa) );
   scatter(Rs(qidx), Ns(qidx), 30,'blue','filled')
   text(Rs(qidx), Ns(qidx), ['$\lambda = 10^{',num2str(log10(aa)),'}$'],'Interpreter','latex')
@@ -54,7 +54,7 @@ alphas = 10.^(-5:0.1:5);
 Gs     = zeros( size(alphas) );
 for q = 1:length(alphas)
   alpha = alphas(q);
-  Gs(q) = Tikhonov_GCV( meta, result, pars, alpha );
+  Gs(q) = wMNE_GCV( meta, result, pars, alpha );
 end
 
 [~, idx]   = min(Gs);
@@ -65,17 +65,18 @@ loglog(alphas,Gs)
 grid on
 xlabel('$\log \lambda$','Interpreter','latex')
 ylabel('$\log {GCV}(\lambda)$','Interpreter','latex')
+ylabel('$\log( \Vert G\, J_\lambda - Y \Vert_F\, /\, tr( G\, K_\lambda - I_M ) )^2$','Interpreter','latex')
 hold on
 scatter(best_alpha, Gs(idx),30,'red','filled')
 title('Generalized Cross-Validation')
 
 %% hyperparameter tuning via CRESO
 
-alphas = 10.^(-5:0.1:5);
+alphas = 10.^(-5:0.05:5);
 Cs     = zeros( size(alphas) );
 for q = 1:length(alphas)
   alpha = alphas(q);
-  Cs(q) = Tikhonov_CRESO( meta, result, pars, alpha );
+  Cs(q) = wMNE_CRESO( meta, result, pars, alpha );
 end
 
 dCs = zeros( size(alphas) );
@@ -85,17 +86,20 @@ for q = 2:(length(alphas)-1)
   dCs(q) = ( Cs(q+1) - Cs(q-1) )/(alphas(q+1) - alphas(q-1));
 end
 
-[~, idx]   = max(Cs);
+idx = find( dCs>0, 1, 'last' );
+%[~, idx]   = max(Cs);
 best_alpha = alphas(idx);
 
 nexttile
-loglog(alphas,abs(Cs))
+semilogx(alphas(2:(end-1)),dCs(2:(end-1)))
+hold on
 grid on
 xlabel('$\log \lambda$','Interpreter','latex')
-ylabel('$\log {C}(\lambda)$','Interpreter','latex')
-hold on
-scatter(best_alpha, Cs(idx),30,'red','filled')
+ylabel('$\frac{d}{d\lambda} ( -\Vert G\, J_\lambda - Y \Vert_2^2 - \lambda \Vert J_\lambda \Vert_2^2)$','Interpreter','latex')
+scatter(best_alpha, dCs(idx),30,'red','filled')
 title('Composite Residual and Smoothing Operator')
+
+
 
 %% hyperparameter tuning via U-curve
 
@@ -103,7 +107,7 @@ alphas = 10.^(-5:0.1:5);
 Us     = zeros( size(alphas) );
 for q = 1:length(alphas)
   alpha = alphas(q);
-  Us(q) = Tikhonov_Ucurve( meta, result, pars, alpha );
+  Us(q) = wMNE_Ucurve( meta, result, pars, alpha );
 end
 
 [~, idx]   = min(Us);
@@ -113,7 +117,7 @@ nexttile
 loglog(alphas,Us)
 grid on
 xlabel('$\log \lambda$','Interpreter','latex')
-ylabel('$\log {C}(\lambda)$','Interpreter','latex')
+ylabel('$\log ( \Vert G\, J_\lambda - Y \Vert_2^{-2} + \Vert J_\lambda \Vert_2^{-2} )$','Interpreter','latex')
 hold on
 scatter(best_alpha, Us(idx),30,'red','filled')
 title('U-curve')
@@ -121,7 +125,7 @@ title('U-curve')
 
 set(gcf,'color','w');
 t.Units = 'inches';
-t.OuterPosition = [0 0 6 4];
+t.OuterPosition = [0 0 6 6];
 
 exportgraphics(t,'GCV_wMNE.pdf','Resolution',300)
 

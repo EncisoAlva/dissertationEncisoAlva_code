@@ -25,8 +25,8 @@ basePath = pwd;
 cd(['./data/', BaseName])
 dataPath = pwd;
 
-load("metadata.mat")
-load("metadata2.mat")
+load("metadata.mat",'meta')
+load("metadata2.mat",'info')
 
 nCases      = info.nTrials;
 nConditions = length(info.SNRvals);
@@ -139,14 +139,36 @@ for solverIDX = 1:nSolvers
       end
       % load individual data
       caseFile = ['file',num2str(caseIDX,'%04d'),'.mat'];
-      load(caseFile);
+      load(caseFile,'result');
       % actual solution
       solution = feval(currSolver, meta, info, result, params.(currSolver));
       % debug figures
       if info.debugFigs
         figure()
+        %trisurf(meta.Cortex.Faces, ...
+        %  meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+        %  solution.normJ )
         trisurf(meta.Cortex.Faces, ...
-          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), 'FaceAlpha', 0)
+          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+          'FaceColor', 'gray' )
+        hold on
+        trisurf(meta.Cortex.Faces, ...
+          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+          solution.normJ , ...
+          'FaceAlph', 'interp', ...
+          'FaceVertexAlphaData', 1*(solution.normJ>0.1) )
+        colormap("turbo")
+        clim([0,1])
+        b = colorbar;
+        b.Label.String = 'Unitless; range=[0,1]';
+        hold on
+        scatter3( result.data.TrueCent(1), result.data.TrueCent(2), result.data.TrueCent(3), ...
+          200, 'red','filled')
+        set(gca, 'color', 'none');
+        %
+        trisurf(meta.Cortex.Faces, ...
+          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+          solution.normJ, 'FaceAlpha', 0 )
         hold on
         scatter3(meta.Gridloc(:,1), meta.Gridloc(:,2), meta.Gridloc(:,3), ...
           40, solution.normJ*120,'filled')

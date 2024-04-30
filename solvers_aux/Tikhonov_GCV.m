@@ -4,7 +4,7 @@ function G = Tikhonov_GCV( meta, result, pars, alpha)
 % residual of Y from leave-one-out
 G = 0;
 for i = 1:pars.r
-  G = G + sum( ( (alpha/(meta.S(i)^2+alpha)) *  meta.U(:,i)' * result.data.Y ).^2, 2);
+  G = G + ( (alpha/(meta.S(i)^2+alpha)) *  meta.U(:,i)' * result.data.Y ).^2;
 end
 for i = (pars.r+1):pars.m
   G = G + sum( ( meta.U(:,i)' * result.data.Y ).^2 );
