@@ -151,7 +151,7 @@ end
 meta.minDist = minDist;
 
 % re-referencing
-meta.LeadfieldAvg = meta.LeadfieldOG - mean( meta.LeadfieldOG, 1 );
+meta.LeadfieldAvg = meta.LeadfieldOG - mean( meta.LeadfieldOG, 2 );
 
 % column-normalization
 meta.ColumnNorm       = vecnorm(meta.LeadfieldAvg,2,1);
@@ -168,7 +168,7 @@ meta.S  = S;
 meta.V  = V;
 
 % redundancy
-meta.info = info;
+%meta.info = info;
 save("metadata","meta");
 save("metadata2","info");
 
@@ -200,6 +200,10 @@ for SNRi = info.SNRvals
       end
     end
     % bypass selection of a random center to a known point
+    if info.debugCent
+      % curated points for parameter tuning
+      [~,result.idxCent] = min(vecnorm( meta.Gridloc - info.debugCoord, 2, 2));
+    end
     result.IntendedCent = meta.Gridloc(result.idxCent,:);
     tmp = randn(3,1);
     result.Orient   = tmp / norm(tmp);
