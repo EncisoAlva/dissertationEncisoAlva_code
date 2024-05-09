@@ -21,23 +21,35 @@ switch info.SourceProfile
   case 'square'
     maxDist = result.kappa;
   case 'exp'
-    maxDist = 2.31*result.kappa;
+    maxDist = 4.61*result.kappa;
   case 'gauss'
-    maxDist = 1.52*result.kappa;
+    maxDist = 2.15*result.kappa;
   case 'circ'
     maxDist = result.kappa;
 end
 % prepare a short list of dipoles within the draw distance
 idx = 1:size(meta.Leadfield, 2);
-RES.idxShort  = idx( vecnorm( meta.Gridloc - result.IntendedCent, 2, 2 ) < maxDist*1.5 );
-RES.nShort    = length( RES.idxShort );
-RES.idxCentShort = find(result.idxCent == RES.idxShort,1);
+RES.idxShort0  = idx( vecnorm( meta.Gridloc - result.IntendedCent, 2, 2 ) < maxDist );
+RES.nShort    = length( RES.idxShort0 );
+RES.idxCentShort = find(result.idxCent == RES.idxShort0,1);
 if isempty(RES.idxCentShort)
-  [~,RES.idxCentShort] = min(vecnorm( meta.Gridloc(RES.idxShort,:) - result.IntendedCent, 2, 2));
+  [~,RES.idxCentShort] = min(vecnorm( meta.Gridloc(RES.idxShort0,:) - result.IntendedCent, 2, 2));
+end
+
+% surface distance
+if strcmp( info.SourceType, 'surface' )
+  [~,GraphDist0] = shortestpathtree(meta.asGraph, result.idxCent, RES.idxShort0 );
+  RES.idxShort   = RES.idxShort0( GraphDist0 < maxDist );
+  RES.idxShort0  = [];
+  RES.nShort     = length( RES.idxShort );
+  RES.idxCentShort = find(result.idxCent == RES.idxShort,1);
+  if isempty(RES.idxCentShort)
+    [~,RES.idxCentShort] = min(vecnorm( meta.Gridloc(RES.idxShort,:) - result.IntendedCent, 2, 2));
+  end
+  [~,GraphDist] = shortestpathtree(meta.asGraph, result.idxCent, RES.idxShort );
 end
 
 % miscellanea
-GraphDist = distances(meta.asGraph, RES.idxShort, RES.idxShort) * max(meta.minDist(RES.idxShort));
 switch info.SourceType
   case 'volume'
     tmp = (RES.idxShort-1)*3 + [1,2,3]';
@@ -51,42 +63,44 @@ RES.time   = linspace(0,0,1);
 RES.Jshort = zeros(RES.nShort,1);
 switch info.SourceProfile
   case 'square'
-    for ii = 1:RES.nShort
-      switch info.SourceType
-        case 'surface'
-          % geodesic distance in cortex
-          if GraphDist(ii,RES.idxCentShort) < result.kappa
+    switch info.SourceType
+      case 'surface'
+        % geodesic distance in cortex
+        for ii = 1:RES.nShort
+          if GraphDist(ii) < result.kappa
             RES.Jshort(ii) = 1;
           end
-        case 'volume'
-          % euclidian distance in 3D space
+        end
+      case 'volume'
+        % euclidian distance in 3D space
+        for ii = 1:RES.nShort
           idx = RES.idxShort(ii); 
           if vecnorm( meta.Gridloc(idx,:) - result.IntendedCent, 2, 2 ) < result.kappa
             RES.Jshort(ii) = 1;
           end
-      end
+        end
     end
   case 'exp'
     switch info.SourceType
       case 'surface'
-        RES.Jshort = exp(- GraphDist(:,RES.idxCentShort) /result.kappa);
+        RES.Jshort = exp(- GraphDist /result.kappa);
       case 'volume'
         RES.Jshort = exp(-vecnorm( meta.Gridloc(RES.idxShort,:) - result.IntendedCent, 2, 2 )/result.kappa);
     end
   case 'gauss'
     switch info.SourceType
       case 'surface'
-        RES.Jshort = exp(-( GraphDist(:,RES.idxCentShort) ).^2/(2*(result.kappa^2)));
+        RES.Jshort = exp(-( GraphDist ).^2/(2*(result.kappa^2)));
       case 'volume'
         RES.Jshort = exp(-vecnorm( meta.Gridloc(RES.idxShort,:) - result.IntendedCent, 2, 2 ).^2/(2*(result.kappa^2)));
     end
   case 'circ'
     switch info.SourceType
       case 'surface'
-        RES.Jshort = ( 1 - ( GraphDist(:,RES.idxCentShort) /result.kappa ).^2 ).^(1/2);
+        RES.Jshort = ( 1 - min( GraphDist /result.kappa,1 ).^2 ).^(1/2);
       case 'volume'
         RES.Jshort = ( 1 - ...
-          ( vecnorm( meta.Gridloc(RES.idxShort,:) - result.IntendedCent, 2, 2 ) /result.kappa ).^2 ).^(1/2);
+          min( vecnorm( meta.Gridloc(RES.idxShort,:) - result.IntendedCent, 2, 2 ) /result.kappa,1 ).^2 ).^(1/2);
     end
 end
 
@@ -100,26 +114,205 @@ end
 
 % debug figures
 if info.debugFigs
+  % TRUE CENTER
   figure()
   trisurf(meta.Cortex.Faces, ...
-    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), 'FaceAlpha', 0)
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+     'FaceColor', [1,1,1]*153/255, ...
+    'EdgeColor', ...
+    'none', 'FaceAlpha', 0.75 )
   hold on
-  scatter3(meta.Gridloc(RES.idxShort,1), meta.Gridloc(RES.idxShort,2), meta.Gridloc(RES.idxShort,3), ...
-    40, RES.normJshort*120,'filled')
+  scatter3(result.IntendedCent(1), result.IntendedCent(2), result.IntendedCent(3), ...
+    30, 'red','filled')
+  legend({'','Seed dipole, $n^*$'}, 'Interpreter', 'latex')
+  legend boxoff
+  %
+  view([ 90  90]) % top
+  camlight('headlight','infinite')
+  material dull
+  grid off
+  set(gca,'DataAspectRatio',[1 1 1])
+  %
+  set(gca,'XColor', 'none','YColor','none','ZColor','none')
+  set(gca, 'color', 'none');
+  set(gcf,'color','w');
+  set(gca,'LooseInset',get(gca,'TightInset'))
+  fig = gcf;
+  fig.Units = 'inches';
+  fig.OuterPosition = [0 0 3 3];
+  exportgraphics(gcf,[info.SourceProfile, '_center.pdf'],'Resolution',600)
+  %
+  % TRUE SOURCES
+  J = zeros(meta.nGridDips,1);
+  J(RES.idxShort) = RES.Jshort;
+  figure()
+  trisurf(meta.Cortex.Faces, ...
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+    'FaceColor', [1,1,1]*153/255, ...
+    'EdgeColor', ...
+    'none', 'FaceAlpha', 1 )
+  view([ 90  90]) % top
+  camlight('headlight', 'infinite')
+  material dull
+  %
+  hold on
+  trisurf(meta.Cortex.Faces, ...
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+    'FaceColor', 'interp', ...
+    'FaceVertexCData', abs(J), ...
+    'EdgeColor', 'none', ...
+    'FaceAlpha', 'interp', ...
+    'FaceVertexAlphaData', 1*(abs(J)>0.05*max(abs(J(:)))) )
+  material dull
+  %colormap("turbo")
   colormap("parula")
-  scatter3( result.IntendedCent(1), result.IntendedCent(2), result.IntendedCent(3), ...
-    200, 'red','filled')
-  title("Magnitude of true sources")
-  b = colorbar;
-  b.Label.String = 'Unitless; range=[0,120]';
+  clim([0,1])
+  %
+  grid off
+  set(gca,'DataAspectRatio',[1 1 1])
+  set(gca,'XColor', 'none','YColor','none','ZColor','none')
+  set(gca, 'color', 'none');
+  set(gcf,'color','w');
+  set(gca,'LooseInset',get(gca,'TightInset'))
+  %
+  switch info.SourceProfile
+    case 'square'
+      title('Square profile')
+    case 'exp'
+      title('Exponential profile')
+    case 'gauss'
+      title('Gaussian profile')
+    case 'circ'
+      title('Polynomial profile')
+  end
+  %
+  fig = gcf;
+  fig.Units = 'inches';
+  fig.OuterPosition = [0 0 3 3];
+  exportgraphics(gcf,[info.SourceProfile, '_GroundTruth.pdf'],'Resolution',600)
+  %
+  % PROFILE GRAPH
+  figure()
+  fig = tiledlayout(1,1,'Padding','tight');
+  nexttile
+  %GraphDist = distances(meta.asGraph, RES.idxShort, RES.idxShort) ...
+  %  * max(meta.minDist(RES.idxShort));
+  switch info.SourceType
+    case 'surface'
+      % geodesic distance in cortex
+      scatter( GraphDist, RES.normJshort.^2, "filled" ) 
+    case 'volume'
+      % euclidian distance in 3D space
+      scatter( vecnorm( meta.Gridloc(RES.idxShort,:) - ...
+        (result.IntendedCent'*ones(size(RES.idxShort)))', 2, 2 ), ...
+        RES.normJshort.^2, "filled" ) 
+  end
+  %
+  switch info.SourceProfile
+    case 'square'
+      title('Square profile')
+    case 'exp'
+      title('Exponential profile')
+    case 'gauss'
+      title('Gaussian profile')
+    case 'circ'
+      title('Polynomial profile')
+  end
+  xlabel('dist$(\mathbf{r}_n, \mathbf{r}_{n^*})$ [mm]','Interpreter','latex')
+  ylabel('$\Vert \mathbf{J} \Vert^2_2$', 'Interpreter','latex')
+  xlim([0, 30])
+  ylim([0,1])
+  %
+  grid on
+  set(gcf,'color','w');
+  fig.Units = 'inches';
+  fig.OuterPosition = [0 0 3 3];
+  exportgraphics(gcf,[info.SourceProfile, '_Profile.pdf'],'Resolution',600)
+end
+
+% for the figre of AUROC
+if info.debugFigs
+  % TRUE SOURCES
+  J = zeros(meta.nGridDips,1);
+  J(RES.idxShort) = RES.Jshort;
+  figure()
+  trisurf(meta.Cortex.Faces, ...
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+    'FaceColor', [1,1,1]*153/255, ...
+    'EdgeColor', ...
+    'none', 'FaceAlpha', 1 )
+  view([ 90  90]) % top
+  camlight('headlight', 'infinite')
+  material dull
+  hold on
+  %
+  trisurf(meta.Cortex.Faces, ...
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+    'FaceColor', 'interp', ...
+    'FaceVertexCData', min(floor(abs(J)*6)/6, 1/6), ...
+    'EdgeColor', 'none', ...
+    'FaceAlpha', 'interp', ...
+    'FaceVertexAlphaData', 1*(abs(J)>(1/6-.1)*max(abs(J(:)))) )
+  material dull
+  %colormap("jet")
+  colormap('parula')
+  clim([0,1])
+  %
+  trisurf(meta.Cortex.Faces, ...
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+    'FaceColor', 'interp', ...
+    'FaceVertexCData', min(floor(abs(J)*6)/6, 3/6), ...
+    'EdgeColor', 'none', ...
+    'FaceAlpha', 'flat', ...
+    'FaceVertexAlphaData', 1*(abs(J)>(3/6-.1)*max(abs(J(:)))) )
+  material dull
+  %colormap("jet")
+  colormap('parula')
+  clim([0,1])
+  %
+  trisurf(meta.Cortex.Faces, ...
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+    'FaceColor', 'interp', ...
+    'FaceVertexCData', min(floor(abs(J)*6)/6, 5/6), ...
+    'EdgeColor', 'none', ...
+    'FaceAlpha', 'flat', ...
+    'FaceVertexAlphaData', 1*(abs(J)>(5/6-.1)*max(abs(J(:)))) )
+  material dull
+  %colormap("jet")
+  colormap('parula')
+  clim([0,1])
+  %
+  %trisurf(meta.Cortex.Faces, ...
+  %  meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+  %  'FaceColor', 'interp', ...
+  %  'FaceVertexCData', abs(J), ...
+  %  'EdgeColor', 'none', ...
+  %  'FaceAlpha', 'interp', ...
+  %  'FaceVertexAlphaData', 1*(abs(J)>0.05*max(abs(J(:)))) )
+  %material dull
+  %%colormap("turbo")
+  %colormap("parula")
+  %clim([0,1])
+  %
+  grid off
+  set(gca,'DataAspectRatio',[1 1 1])
+  set(gca,'XColor', 'none','YColor','none','ZColor','none')
+  set(gca, 'color', 'none');
+  set(gcf,'color','w');
+  set(gca,'LooseInset',get(gca,'TightInset'))
+  %
+  fig = gcf;
+  fig.Units = 'inches';
+  fig.OuterPosition = [0 0 2 3];
+  exportgraphics(gcf,[info.SourceProfile, '_AUROC_GroundTruth.pdf'],'Resolution',600)
 end
 
 % Y, noiseless
 switch info.SourceType
   case 'volume'
-    RES.Yclean = meta.LeadfieldOG(:,RES.idxShortG) * kron( result.Orient, RES.Jshort );
+    RES.Yclean = meta.Leadfield(:,RES.idxShortG) * kron( result.Orient, RES.Jshort );
   case 'surface'
-    RES.Yclean = meta.LeadfieldOG(:,RES.idxShortG) * RES.Jshort;
+    RES.Yclean = meta.Leadfield(:,RES.idxShortG) * RES.Jshort';
 end
 %RES.varY = vecnorm( meta.LeadfieldOG, 2, 2 );
 RES.varY = RES.Yclean.^2;
@@ -136,6 +329,6 @@ RES.YOG = RES.Yclean + 10^(-result.SNR/10) * diag( RES.varY ) * noise;
 RES.Y   = RES.YOG - mean(RES.YOG,1);
 
 % true center of mass
-RES.TrueCent = RES.Jshort' * meta.Gridloc(RES.idxShort,:) / sum(RES.Jshort);
+RES.TrueCent = RES.Jshort * meta.Gridloc(RES.idxShort,:) / sum(RES.Jshort);
 
 end

@@ -8,12 +8,20 @@ function metric = AvgPrecision_gral( meta, result, solution, weighted, local )
 normJpeak  = solution.normJ(:,pkIDX) / max(solution.normJ(:,pkIDX));
 
 % local: use only sources with magnitude higher than 10% of maxJ
+hard_max = 10*sqrt(40/pi);
 if local
-  locDist = min( ...
+  locDist = min( [...
     max(vecnorm( meta.Gridloc(result.data.idxShort,:) - result.data.TrueCent , 2, 2 )), ...
-    max(vecnorm( meta.Gridloc(normJpeak>0.1,:) - result.data.TrueCent , 2, 2 ) ) );
+    max(vecnorm( meta.Gridloc(normJpeak>0.1,:) - result.data.TrueCent , 2, 2 ) ), ...
+    hard_max] );
   idx    = 1:meta.nGridDips;
-  locIDX = idx( vecnorm( meta.Gridloc - result.data.TrueCent , 2, 2 ) < locDist );
+  switch meta.info.SourceType
+    case 'volume'
+      locIDX = idx( vecnorm( meta.Gridloc - result.data.TrueCent , 2, 2 ) < locDist );
+    case 'surface'
+      [~,GraphDist] = shortestpathtree(meta.asGraph, result.idxCent, idx );
+      locIDX = idx( GraphDist < locDist );
+  end
 else
   locIDX = 1:1:meta.nGridDips;
 end
@@ -80,8 +88,8 @@ if meta.info.debugFigs
 end
 
 % Average Precision is the area under the Precision-Recall curve
-rec = TP ./ ( TP + FN );
-pre = TP ./ ( TP + FP );
+rec = TP ./ ( TP + FN +1 ); % the +1 is to avoid NaNs
+pre = TP ./ ( TP + FP +1 );
 
 if meta.info.debugFigs
   figure()
@@ -98,6 +106,33 @@ if meta.info.debugFigs
   ylabel('Precision')
   xlabel('Recall')
   subtitle([lab_loc, ', ', lab_we])
+end
+
+if meta.info.debugFigs
+  figure()
+  plot(rec, pre)
+  grid on
+  xlabel('Recall = TP/(TP+FN)', 'Interpreter','latex')
+  ylabel('Precision = TP/(TP+FP)', 'Interpreter','latex')
+  %
+  hold on
+  for bb = 0:0.2:1
+    [~, ii] = min(abs(bb-Beta));
+    text(rec(ii), pre(ii),  ...
+      ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex',...
+      'BackgroundColor', 'white')
+  end
+  for bb = 0:.05:1
+    [~, ii] = min(abs(bb-Beta));
+    scatter(rec(ii), pre(ii), 30,'blue','filled')
+  end
+  title('Precision-Recall Curve')
+  set(gcf,'color','w');
+  set(gca,'LooseInset',get(gca,'TightInset'))
+  fig = gcf;
+  fig.Units = 'inches';
+  fig.OuterPosition = [0 0 3 3]*2;
+  exportgraphics(gcf,'PRC.pdf','Resolution',600)
 end
 
 % area under ROC using trapezoid rule

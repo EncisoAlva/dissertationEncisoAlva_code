@@ -2,7 +2,7 @@ function G = wMNE_GCV( meta, result, pars, alpha)
 % L-Curve Criterion
 
 % kernel
-K = meta.LeadfieldOG' * pinv( eye(pars.m) * alpha + meta.LeadfieldOG * meta.LeadfieldOG' );
+K = meta.Leadfield' * pinv( eye(pars.m) * alpha + meta.Leadfield * meta.Leadfield' );
 
 % solution
 J = K * result.data.Y;

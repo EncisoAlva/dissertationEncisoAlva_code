@@ -31,8 +31,8 @@ TotTrials = info.nTrials*length(info.SNRvals);
 %% LOAD DATA
 
 % forward model
-load([ basePath,'\anat_ref\', info.OGforward, '.mat']);
-load([ basePath,'\anat_ref\', info.OGanatomy, '.mat']);
+load([ basePath,'\anat_ref\', info.OGforward, '.mat'],'forward');
+load([ basePath,'\anat_ref\', info.OGanatomy, '.mat'],'cortex','head');
 
 % metadata
 meta = [];
@@ -107,51 +107,105 @@ end
 if info.debugFigs
   figure()
   trisurf(meta.Cortex.Faces, ...
-    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), 'FaceAlpha', 0)
-  hold on
-  scatter3(meta.Gridloc(:,1), meta.Gridloc(:,2), meta.Gridloc(:,3), ...
-    40, meta.GridDepth,'filled')
-  colormap("parula")
-  title('Depth of dipoles: distance from scalp')
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+    'FaceColor', 'interp', ...
+    'FaceVertexCData', meta.GridDepth, ...
+    'EdgeColor', 'none' )
+  view([ 90  90]) % top
+  camlight('headlight', 'infinite')
+  material dull
+  %
+  set(gca,'DataAspectRatio',[1 1 1])
+  %set(gca,'XColor', 'none','YColor','none','ZColor','none')
+  set(gca,'XColor', 'black','YColor','black','ZColor','black')
+  set(gca, 'color', 'none');
+  %grid off
+  %title('Depth of dipoles: distance from scalp')
   a=colorbar;
   a.Label.String = 'Distance to scalp [mm]';
   %
+  xlabel('[mm]')
+  ylabel('[mm]')
+  zlabel('[mm]')
+  %view([  0   0]) % right
+  %view([ 90   0]) % front
+  %view([180   0]) % left
+  %view([270   0]) % back
+  %view([ 90  90]) % top
+  %
   figure()
-  clf
   trisurf(meta.Cortex.Faces, ...
-    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), 'FaceAlpha', 0)
-  hold on
-  scatter3(meta.Gridloc(:,1), meta.Gridloc(:,2), meta.Gridloc(:,3), ...
-    40, meta.GridVolume,'filled')
-  colormap("parula")
+    meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+    'FaceColor', 'interp', ...
+    'FaceVertexCData', meta.GridVolume, ...
+    'EdgeColor', 'none' )
+  view([ 90  90]) % top
+  camlight('headlight', 'infinite')
+  material dull
+  %
+  set(gca,'DataAspectRatio',[1 1 1])
+  %set(gca,'XColor', 'none','YColor','none','ZColor','none')
+  %set(gca,'XColor', 'black','YColor','black','ZColor','black')
+  set(gca, 'color', 'none');
+  %
   b=colorbar;
   switch meta.Type
     case 'surface'
-      title("'Area' of dipoles: area of neighboring triangle elements")
-      b.Label.String = 'Distance to scalp [mm^2]';
+      %title("Area of neighboring elements")
+      b.Label.String = "Area of neighboring elements [mm^2]";
     case 'volume'
-      title("'Volume' of dipoles: volume of neighboring tetahedra elements")
-      b.Label.String = 'Distance to scalp [mm^3]';
+      %title("'Volume' of dipoles: volume of neighboring tetahedra elements")
+      b.Label.String = "Voluma of neighboring elements [mm^3]";
   end
+  %
+  xlabel('[mm]')
+  ylabel('[mm]')
+  zlabel('[mm]')
+  %view([  0   0]) % right
+  %view([ 90   0]) % front
+  %view([180   0]) % left
+  %view([270   0]) % back
+  %view([ 90  90]) % top
 end
 
 % for geodesic distance
 switch info.SourceType
   case 'surface'
     meta.DipEdges = edges_mine( meta.Cortex );
+    weights = zeros( size(meta.DipEdges,1), 1);
+    for i = 1:size(meta.DipEdges,1)
+      weights(i) = norm( meta.Cortex.Vertices(meta.DipEdges(i,1),:) - meta.Cortex.Vertices(meta.DipEdges(i,2),:), 2 );
+    end
   case 'volume'
     meta.DipEdges = edges_mine( meta.DT );
+    weights = zeros( size(meta.DipEdges,1), 1);
+    for i = 1:size(meta.DipEdges,1)
+      weights(i) = norm( meta.DT.Vertices(meta.DipEdges(i,1),:) - meta.DT.Vertices(meta.DipEdges(i,2),:), 2 );
+    end
 end
-meta.asGraph = graph( table(meta.DipEdges, 'VariableNames',{'EndNodes'}) );
-minDist = zeros(meta.nGridDips,1);
-for ii = 1:meta.nGridDips
-  minDist(ii) = min(vecnorm( ...
-    meta.Gridloc([(1:(ii-1)),((ii+1):meta.nGridDips)],:) - meta.Gridloc(ii,:), 2, 2 ));
-end
-meta.minDist = minDist;
+%meta.asGraph = graph( table(meta.DipEdges, 'VariableNames',{'EndNodes'}) );
+tmp_table = table(meta.DipEdges, 'VariableNames',{'EndNodes'});
+tmp_table.Weight = weights;
+meta.asGraph = graph( tmp_table );
+%minDist = zeros(meta.nGridDips,1);
+%for ii = 1:meta.nGridDips
+%  minDist(ii) = min(vecnorm( ...
+%    meta.Gridloc([(1:(ii-1)),((ii+1):meta.nGridDips)],:) - meta.Gridloc(ii,:), 2, 2 ));
+%end
+%meta.minDist = minDist;
 
 % re-referencing
-meta.LeadfieldAvg = meta.LeadfieldOG - mean( meta.LeadfieldOG, 2 );
+meta.LeadfieldAvg = meta.LeadfieldOG - mean( meta.LeadfieldOG, 1 );
+if info.debugFigs
+  figure()
+  tiledlayout(1,2)
+  nexttile
+  histogram(sum(meta.LeadfieldOG, 1))
+  title('1 * G(:,i) ')
+  nexttile
+  histogram(sum(meta.LeadfieldAvg, 1))
+  title('1 * G(:,i) ')
+end
 
 % column-normalization
 meta.ColumnNorm       = vecnorm(meta.LeadfieldAvg,2,1);
@@ -168,7 +222,6 @@ meta.S  = S;
 meta.V  = V;
 
 % redundancy
-%meta.info = info;
 save("metadata","meta");
 save("metadata2","info");
 
@@ -215,16 +268,6 @@ for SNRi = info.SNRvals
     end
     %
     result.data = feval(info.ProtocolFun, meta, result, info);
-    %
-    if info.debugFigs
-      figure()
-      clf
-      trisurf(meta.Cortex.Faces, ...
-        meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), 'FaceAlpha', 0)
-      hold on
-      scatter3(result.IntendedCent(1), result.IntendedCent(2), result.IntendedCent(3), ...
-        300, 'red','filled')
-    end
     %
     FileName = ['file',num2str(idxRand,'%04d'),'.mat'];
     save(FileName,"result");

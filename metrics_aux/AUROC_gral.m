@@ -8,12 +8,20 @@ function metric = AUROC_gral( meta, result, solution, weighted, local )
 normJpeak  = solution.normJ(:,pkIDX) / max(solution.normJ(:,pkIDX));
 
 % local: use only sources with magnitude higher than 10% of maxJ
+hard_max = 10*sqrt(40/pi);
 if local
-  locDist = min( ...
+  locDist = min( [...
     max(vecnorm( meta.Gridloc(result.data.idxShort,:) - result.data.TrueCent , 2, 2 )), ...
-    max(vecnorm( meta.Gridloc(normJpeak>0.1,:) - result.data.TrueCent , 2, 2 ) ) );
+    max(vecnorm( meta.Gridloc(normJpeak>0.1,:) - result.data.TrueCent , 2, 2 ) ), ...
+    hard_max] );
   idx    = 1:meta.nGridDips;
-  locIDX = idx( vecnorm( meta.Gridloc - result.data.TrueCent , 2, 2 ) < locDist );
+  switch meta.info.SourceType
+    case 'volume'
+      locIDX = idx( vecnorm( meta.Gridloc - result.data.TrueCent , 2, 2 ) < locDist );
+    case 'surface'
+      [~,GraphDist] = shortestpathtree(meta.asGraph, result.idxCent, idx );
+      locIDX = idx( GraphDist < locDist );
+  end
 else
   locIDX = 1:1:meta.nGridDips;
 end
@@ -64,7 +72,7 @@ if meta.info.debugFigs
   end
   figure()
   plot(Beta, TP, Beta, FP, Beta, TN, Beta, FN)
-  xlabel('Classification threshold')
+  xlabel('Classification threshold, beta')
   legend('True Positives', 'False Positives', 'True Negatives', 'False Negatives')
   if weighted
     switch meta.info.SourceType
@@ -81,8 +89,8 @@ end
 
 % ROC is parametrized by FPR vs TPR
 % False Positive Rate, True Positive Rates
-FPR = FP ./ ( FP + TN );
-TPR = TP ./ ( TP + TN );
+FPR = FP ./ ( FP + TN +1);
+TPR = TP ./ ( TP + TN +1);
 
 if meta.info.debugFigs
   figure()
@@ -99,6 +107,37 @@ if meta.info.debugFigs
   xlabel('False Positive Rate')
   ylabel('True Positive Rate')
   subtitle([lab_loc, ', ', lab_we])
+end
+
+if meta.info.debugFigs
+  figure()
+  plot(FPR, TPR)
+  grid on
+  xlabel('FPR = FP/(FP+TN)', 'Interpreter','latex')
+  ylabel('TPR = TP/(TP+FN)', 'Interpreter','latex')
+  %
+  hold on
+  for bb = 0:.01:1
+    [~, ii] = min(abs(bb-Beta));
+    scatter(FPR(ii), TPR(ii), 30,'blue','filled')
+  end
+  for bb = 0:0.1:1
+    [~, ii] = min(abs(bb-Beta));
+    text(FPR(ii), TPR(ii),  ...
+      ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex',...
+      'BackgroundColor', 'white')
+  end
+  for bb = 0:.05:1
+    [~, ii] = min(abs(bb-Beta));
+    scatter(FPR(ii), TPR(ii), 30,'blue','filled')
+  end
+  title('Receiver-Operator Curve')
+  set(gcf,'color','w');
+  set(gca,'LooseInset',get(gca,'TightInset'))
+  fig = gcf;
+  fig.Units = 'inches';
+  fig.OuterPosition = [0 0 3 3]*2;
+  exportgraphics(gcf,'ROC.pdf','Resolution',600)
 end
 
 % area under ROC using trapezoid rule

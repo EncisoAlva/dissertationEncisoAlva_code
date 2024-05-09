@@ -143,41 +143,46 @@ for solverIDX = 1:nSolvers
       % actual solution
       solution = feval(currSolver, meta, info, result, params.(currSolver));
       % debug figures
-      if info.debugFigs
+      if info.debugFigs && (caseIDX < 2 )
+        % ESTIMATED SOURCES 
+        Junit = solution.normJ/max(solution.normJ(:));
         figure()
-        %trisurf(meta.Cortex.Faces, ...
-        %  meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
-        %  solution.normJ )
         trisurf(meta.Cortex.Faces, ...
           meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
-          'FaceColor', 'gray' )
-        hold on
-        trisurf(meta.Cortex.Faces, ...
-          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
-          solution.normJ , ...
-          'FaceAlph', 'interp', ...
-          'FaceVertexAlphaData', 1*(solution.normJ>0.1) )
-        colormap("turbo")
-        clim([0,1])
-        b = colorbar;
-        b.Label.String = 'Unitless; range=[0,1]';
-        hold on
-        scatter3( result.data.TrueCent(1), result.data.TrueCent(2), result.data.TrueCent(3), ...
-          200, 'red','filled')
-        set(gca, 'color', 'none');
+          'FaceColor', [1,1,1]*153/255, ...
+          'EdgeColor', ...
+          'none', 'FaceAlpha', 1 )
+        view([ 90  90]) % top
+        camlight('headlight', 'infinite')
+        material dull
         %
+        hold on
         trisurf(meta.Cortex.Faces, ...
           meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
-          solution.normJ, 'FaceAlpha', 0 )
-        hold on
-        scatter3(meta.Gridloc(:,1), meta.Gridloc(:,2), meta.Gridloc(:,3), ...
-          40, solution.normJ*120,'filled')
+          'FaceColor', 'interp', ...
+          'FaceVertexCData', Junit, ...
+          'EdgeColor', 'none', ...
+          'FaceAlpha', 'interp', ...
+          'FaceVertexAlphaData', 1*(Junit>0.05) )
+        material dull
+        %colormap("turbo")
         colormap("parula")
-        scatter3( result.data.TrueCent(1), result.data.TrueCent(2), result.data.TrueCent(3), ...
-          200, 'red','filled')
-        title("Magnitude of true sources")
+        clim([0,1])
+        %
+        grid off
+        set(gca,'DataAspectRatio',[1 1 1])
+        set(gca,'XColor', 'none','YColor','none','ZColor','none')
+        set(gca, 'color', 'none');
+        set(gcf,'color','w');
+        set(gca,'LooseInset',get(gca,'TightInset'))
+        %
         b = colorbar;
         b.Label.String = 'Unitless; range=[0,120]';
+        %
+        fig = gcf;
+        fig.Units = 'inches';
+        fig.OuterPosition = [0 0 3 3];
+        exportgraphics(gcf,[currSolver, '_EstimateExample.pdf'],'Resolution',600)
       end
       %
       % EVALUATION METRICS

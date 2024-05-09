@@ -2,7 +2,7 @@ function [N, R] = wMNE_Lcurve( meta, result, pars, alpha)
 % L-Curve Criterion
 
 % solution
-J = meta.LeadfieldOG' * pinv( eye(pars.m) * alpha + meta.LeadfieldOG * meta.LeadfieldOG' ) * result.data.Y;
+J = meta.Leadfield' * pinv( eye(pars.m) * alpha + meta.Leadfield * meta.Leadfield' ) * result.data.Y;
 
 % norm
 N = vecnorm( J, 2 )^2;
