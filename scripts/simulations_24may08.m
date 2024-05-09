@@ -50,7 +50,7 @@ info.print_all = false;
 
 %% SQUARE PROFILE
 
-info.BaseName   = 'protocol04_figures_square';
+info.BaseName   = 'protocol04_shape_square';
 info.SourceProfile = 'square';
 
 %generator(info);
@@ -59,7 +59,7 @@ collector(info);
 
 %% GAUSSIAN PROFILE
 
-info.BaseName   = 'protocol04_30_figures_gauss';
+info.BaseName   = 'protocol04_shape_gauss';
 info.SourceProfile = 'gauss';
 
 %generator(info);
@@ -68,7 +68,7 @@ collector(info);
 
 %% EXPONENTIAL PROFILE
 
-info.BaseName   = 'protocol04_30_exp';
+info.BaseName   = 'protocol04_shape_exp';
 info.SourceProfile = 'exp';
 
 %generator(info);
@@ -77,7 +77,7 @@ collector(info);
 
 %% POLYNOMIAL PROFILE
 
-info.BaseName   = 'protocol04_30_circ';
+info.BaseName   = 'protocol04_shape_circ';
 info.SourceProfile = 'circ';
 
 %generator(info);

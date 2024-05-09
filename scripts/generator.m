@@ -222,6 +222,7 @@ meta.S  = S;
 meta.V  = V;
 
 % redundancy
+meta.info = info;
 save("metadata","meta");
 save("metadata2","info");
 

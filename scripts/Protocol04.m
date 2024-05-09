@@ -307,12 +307,17 @@ if info.debugFigs
   exportgraphics(gcf,[info.SourceProfile, '_AUROC_GroundTruth.pdf'],'Resolution',600)
 end
 
+% patch
+if size(RES.Jshort, 2) ~= 1
+  RES.Jshort = RES.Jshort';
+end
+
 % Y, noiseless
 switch info.SourceType
   case 'volume'
     RES.Yclean = meta.Leadfield(:,RES.idxShortG) * kron( result.Orient, RES.Jshort );
   case 'surface'
-    RES.Yclean = meta.Leadfield(:,RES.idxShortG) * RES.Jshort';
+    RES.Yclean = meta.Leadfield(:,RES.idxShortG) * RES.Jshort;
 end
 %RES.varY = vecnorm( meta.LeadfieldOG, 2, 2 );
 RES.varY = RES.Yclean.^2;
@@ -329,6 +334,6 @@ RES.YOG = RES.Yclean + 10^(-result.SNR/10) * diag( RES.varY ) * noise;
 RES.Y   = RES.YOG - mean(RES.YOG,1);
 
 % true center of mass
-RES.TrueCent = RES.Jshort * meta.Gridloc(RES.idxShort,:) / sum(RES.Jshort);
+RES.TrueCent = RES.Jshort' * meta.Gridloc(RES.idxShort,:) / sum(RES.Jshort);
 
 end

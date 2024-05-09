@@ -8,7 +8,7 @@ function metric = AvgPrecision_gral( meta, result, solution, weighted, local )
 normJpeak  = solution.normJ(:,pkIDX) / max(solution.normJ(:,pkIDX));
 
 % local: use only sources with magnitude higher than 10% of maxJ
-hard_max = 10*sqrt(40/pi);
+hard_max = 10*sqrt(30/pi);
 if local
   locDist = min( [...
     max(vecnorm( meta.Gridloc(result.data.idxShort,:) - result.data.TrueCent , 2, 2 )), ...
