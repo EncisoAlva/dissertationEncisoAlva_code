@@ -101,6 +101,7 @@ switch info.SourceType
     end
     meta.Elements    = cleanConnectivityList;
     meta.ElementSize = ElementSize;
+    meta.DT = DT;
 end
 
 % some figres related to dipoles' depth and area/volume
@@ -176,17 +177,17 @@ switch info.SourceType
     for i = 1:size(meta.DipEdges,1)
       weights(i) = norm( meta.Cortex.Vertices(meta.DipEdges(i,1),:) - meta.Cortex.Vertices(meta.DipEdges(i,2),:), 2 );
     end
+    %meta.asGraph = graph( table(meta.DipEdges, 'VariableNames',{'EndNodes'}) );
+    tmp_table = table(meta.DipEdges, 'VariableNames',{'EndNodes'});
+    tmp_table.Weight = weights;
+    meta.asGraph = graph( tmp_table );
   case 'volume'
-    meta.DipEdges = edges_mine( meta.DT );
-    weights = zeros( size(meta.DipEdges,1), 1);
-    for i = 1:size(meta.DipEdges,1)
-      weights(i) = norm( meta.DT.Vertices(meta.DipEdges(i,1),:) - meta.DT.Vertices(meta.DipEdges(i,2),:), 2 );
-    end
+    %meta.DipEdges = edges_mine( meta.DT );
+    %weights = zeros( size(meta.DipEdges,1), 1);
+    %for i = 1:size(meta.DipEdges,1)
+    %  weights(i) = norm( meta.DT.Vertices(meta.DipEdges(i,1),:) - meta.DT.Vertices(meta.DipEdges(i,2),:), 2 );
+    %end
 end
-%meta.asGraph = graph( table(meta.DipEdges, 'VariableNames',{'EndNodes'}) );
-tmp_table = table(meta.DipEdges, 'VariableNames',{'EndNodes'});
-tmp_table.Weight = weights;
-meta.asGraph = graph( tmp_table );
 %minDist = zeros(meta.nGridDips,1);
 %for ii = 1:meta.nGridDips
 %  minDist(ii) = min(vecnorm( ...

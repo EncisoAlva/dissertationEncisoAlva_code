@@ -24,17 +24,17 @@
 info = [];
 
 % forward model
-info.OGforward  = 'asa_10_10_srf_BEM';
+info.OGforward  = 'asa_10_10_vol_FEM3';
 info.OGanatomy  = 'icbm152anatomy';
 
-info.SourceType = 'surface';
+info.SourceType = 'volume';
 
 info.nTrials    = 50;
 info.SNRvals    = [inf,30,20];
 
 info.ProtocolFun   = 'Protocol04';
 
-info.maxDepth  = 20; % unit: mm
+info.maxDepth  = 50; % unit: mm
 info.maxKappa  = 10*sqrt(10/pi); % unit: mm
 info.minKappa  = 10*sqrt(10/pi); % unit: mm
 
@@ -50,7 +50,7 @@ info.print_all = false;
 
 %% SQUARE PROFILE
 
-info.BaseName   = 'protocol04_shape_square';
+info.BaseName   = 'protocol04_shape_square_vol';
 info.SourceProfile = 'square';
 
 %generator(info);
@@ -59,7 +59,7 @@ collector(info);
 
 %% GAUSSIAN PROFILE
 
-info.BaseName   = 'protocol04_shape_gauss';
+info.BaseName   = 'protocol04_shape_gauss_vol';
 info.SourceProfile = 'gauss';
 
 %generator(info);
@@ -68,7 +68,7 @@ collector(info);
 
 %% EXPONENTIAL PROFILE
 
-info.BaseName   = 'protocol04_shape_exp';
+info.BaseName   = 'protocol04_shape_exp_vol';
 info.SourceProfile = 'exp';
 
 %generator(info);
@@ -77,7 +77,7 @@ collector(info);
 
 %% POLYNOMIAL PROFILE
 
-info.BaseName   = 'protocol04_shape_circ';
+info.BaseName   = 'protocol04_shape_circ_vol';
 info.SourceProfile = 'circ';
 
 %generator(info);
