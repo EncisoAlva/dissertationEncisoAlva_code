@@ -7,11 +7,11 @@ parTic = tic;
 pars   = [];
 
 % general values
-pars.M    = size(meta.Leadfield, 1);
-pars.N    = size(meta.Leadfield, 2);
+pars.M    = size(meta.LeadfieldColNorm, 1);
+pars.N    = size(meta.LeadfieldColNorm, 2);
 pars.T    = size(result.data.time, 2);
 pars.H    = eye(pars.M) - (ones(pars.M)/pars.M); % averaging operator
-pars.HGGH = pars.H * meta.Leadfield * meta.Leadfield' * pars.H;
+pars.HGGH = pars.H * meta.LeadfieldColNorm * meta.LeadfieldColNorm' * pars.H;
 
 %%
 % hyperparameter tuning via L-curve
@@ -23,25 +23,35 @@ for q = 1:length(alphas)
   [Ns(q), Rs(q)] = sLORETA_Lcurve( meta, info, result, pars, alpha );
 end
 
+[~,best_q] = min( abs(Ns)/max(abs(Ns)) +abs(Rs)/max(abs(Rs)) );
+
 figure()
 tiledlayout(2,2,'Padding','tight');
 nexttile
-loglog(Rs,Ns)
+plot(Rs,Ns)
+%loglog(Rs,Ns)
+%plot(Rs-max(Rs)+min(Rs),Ns-max(Ns))
 grid on
-xlabel('$\log \Vert \mathbf{G}\,\mathbf{J}_\lambda - \mathbf{Y} \Vert_2^2 $','Interpreter','latex')
-ylabel('$\log \Vert \mathbf{J}_\lambda \Vert_2^2$','Interpreter','latex')
+%xlabel('$\log \Vert \mathbf{G}\,\mathbf{S}_\lambda - \mathbf{Y} \Vert_2^2 $','Interpreter','latex')
+%ylabel('$\log \Vert \mathbf{S}_\lambda \Vert_2^2$','Interpreter','latex')
+xlabel('$\Vert \mathbf{G}\,\mathbf{S}_\lambda - \mathbf{Y} \Vert_2^2 $','Interpreter','latex')
+ylabel('$\Vert \mathbf{S}_\lambda \Vert_2^2$','Interpreter','latex')
 hold on
-for aa = 10.^(1:1:7)
+for aa = 10.^(1:1:5)
   [~,qidx] = min( abs(alphas-aa) );
   text(Rs(qidx), Ns(qidx),  ...
-    ['$\lambda = 10^{',num2str(log10(aa)),'}$'], 'Interpreter','latex',...
-    'BackgroundColor', 'white')
+    ['$\lambda = 10^{',num2str(log10(aa)),'}$'], 'Interpreter','latex')
+    %,'BackgroundColor', 'white'...
   scatter(Rs(qidx), Ns(qidx), 30,'blue','filled')
 end
+scatter(Rs(best_q), Ns(best_q),75,'red','filled','pentagram')
 title('L-curve')
+legend
+legend({'','','','','','','Optimal $\lambda$'}, 'Interpreter','latex')
+legend('boxoff') 
 
 % hyperparameter tuning via Generalized Cross-Validation
-alphas = 10.^(1:0.1:7);
+alphas = 10.^(0:0.1:5);
 Gs     = zeros( size(alphas) );
 for q = 1:length(alphas)
   alpha = alphas(q);
@@ -51,16 +61,22 @@ end
 [~, idx]   = min(Gs);
 best_alpha = alphas(idx);
 
+Gs = Gs*10^8;
+
 nexttile
 loglog(alphas,Gs)
 grid on
-xlabel('$\log \lambda$','Interpreter','latex')
+xlabel('$\lambda$','Interpreter','latex')
 %ylabel('$\log {GCV}(\lambda)$','Interpreter','latex')
-ylabel('$\log( \Vert \mathbf{G}\, \mathbf{J}_\lambda - \mathbf{Y} \Vert_F\, /\, tr( \mathbf{G}\, \mathbf{K}_\lambda - \mathbf{I}_M ) )^2$','Interpreter','latex')
+ylabel('$\Vert \mathbf{G}\, \mathbf{S}_\lambda - \mathbf{Y} \Vert_F^2\, /\, tr( \mathbf{G}\, \mathbf{K}_\lambda - \mathbf{I}_M )^2$','Interpreter','latex')
 hold on
-scatter(best_alpha, Gs(idx),50,'red','filled','pentagram')
+scatter(best_alpha, Gs(idx),75,'red','filled','pentagram')
 title('GCV')
 xlim([min(alphas) max(alphas)])
+legend({'','Optimal $\lambda$'}, 'Interpreter','latex')
+legend('boxoff') 
+
+xticks(10.^(0:5))
 
 % hyperparameter tuning via CRESO
 %alphas = 10.^(-4:0.05:5);
@@ -86,10 +102,14 @@ semilogx(alphas(2:(end-1)),dCs(2:(end-1)))
 hold on
 grid on
 xlabel('$\log \lambda$','Interpreter','latex')
-ylabel('$\frac{d}{d\lambda} ( -\Vert \mathbf{G}\, \mathbf{J}_\lambda - \mathbf{Y} \Vert_2^2 - \lambda \Vert \mathbf{J}_\lambda \Vert_2^2)$','Interpreter','latex')
-scatter(best_alpha, dCs(idx),50,'red','filled','pentagram')
+ylabel('$\frac{d}{d\lambda} ( -\Vert \mathbf{G}\, \mathbf{S}_\lambda - \mathbf{Y} \Vert_2^2 - \lambda \Vert \mathbf{S}_\lambda \Vert_2^2)$','Interpreter','latex')
+scatter(best_alpha, dCs(idx),75,'red','filled','pentagram')
 title('CRESO')
 xlim([min(alphas) max(alphas)])
+legend({'','Optimal $\lambda$'}, 'Interpreter','latex')
+legend('boxoff') 
+
+xticks(10.^(0:5))
 
 % hyperparameter tuning via U-curve
 %alphas = 10.^(-10:0.1:10);
@@ -106,17 +126,20 @@ nexttile
 loglog(alphas,Us)
 grid on
 xlabel('$\log \lambda$','Interpreter','latex')
-ylabel('$\log ( \Vert \mathbf{G}\, \mathbf{J}_\lambda - \mathbf{Y} \Vert_2^{-2} + \Vert \mathbf{J}_\lambda \Vert_2^{-2} )$','Interpreter','latex')
+ylabel('$\Vert \mathbf{G}\, \mathbf{S}_\lambda - \mathbf{Y} \Vert_2^{-2} + \Vert \mathbf{S}_\lambda \Vert_2^{-2}$','Interpreter','latex')
 hold on
-scatter(best_alpha, Us(idx),50,'red','filled','pentagram')
+scatter(best_alpha, Us(idx),75,'red','filled','pentagram')
 title('U-curve')
 xlim([min(alphas) max(alphas)])
+legend({'','Optimal $\lambda$'}, 'Interpreter','latex')
+legend('boxoff') 
+xticks(10.^(0:5))
 
 % save graph
 set(gcf,'color','w');
 fig = gcf;
 fig.Units = 'inches';
-fig.OuterPosition = [0 0 6 6];
+fig.OuterPosition = [0 0 8 5];
 
 exportgraphics(fig,'ParTuning_sLORETA.pdf','Resolution',300)
 

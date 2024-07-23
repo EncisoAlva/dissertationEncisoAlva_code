@@ -2,10 +2,10 @@ function G = sLORETA_GCV( meta, info, result, pars, alpha )
 % Generalized Cross-Validation
 
 % inversion kernel
-Kv = meta.Leadfield' * pars.H * pinv( pars.HGGH + alpha*eye(pars.M) );
+Kv = meta.LeadfieldColNorm' * pars.H * pinv( pars.HGGH + alpha*pars.H );
 
 % GCV metric
-G = pars.M * norm( (meta.Leadfield*Kv - pars.H ) * ...
-  result.data.Y,"fro")^2 ...
-  / ( trace(meta.Leadfield*Kv) - pars.M )^2;
+G = norm( meta.LeadfieldColNorm*Kv*result.data.Y - ...
+  result.data.Y,"fro")^(1/2) ...
+  / ( trace(meta.LeadfieldColNorm*Kv) - pars.M )^2;
 end
