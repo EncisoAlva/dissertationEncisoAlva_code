@@ -94,7 +94,7 @@ TPR = TP ./ ( TP + TN +1);
 
 if meta.info.debugFigs
   figure()
-  tiledlayout(1,2)
+  tiledlayout(1,2,'Padding','tight')
   %
   nexttile
   plot(Beta, TPR, Beta, FPR)
@@ -115,6 +115,8 @@ if meta.info.debugFigs
   grid on
   xlabel('FPR = FP/(FP+TN)', 'Interpreter','latex')
   ylabel('TPR = TP/(TP+FN)', 'Interpreter','latex')
+  xlim([0,1])
+  ylim([0,1])
   %
   hold on
   for bb = 0:.01:1
@@ -123,21 +125,23 @@ if meta.info.debugFigs
   end
   for bb = 0:0.1:1
     [~, ii] = min(abs(bb-Beta));
+    %text(FPR(ii), TPR(ii),  ...
+    %  ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex',...
+    %  'BackgroundColor', 'white')
     text(FPR(ii), TPR(ii),  ...
-      ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex',...
-      'BackgroundColor', 'white')
+      ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex')
   end
   for bb = 0:.05:1
     [~, ii] = min(abs(bb-Beta));
     scatter(FPR(ii), TPR(ii), 30,'blue','filled')
   end
-  title('Receiver-Operator Curve')
+  title('Dynamic Receiver-Operator Curve')
   set(gcf,'color','w');
   set(gca,'LooseInset',get(gca,'TightInset'))
   fig = gcf;
   fig.Units = 'inches';
-  fig.OuterPosition = [0 0 3 3]*2;
-  exportgraphics(gcf,'ROC.pdf','Resolution',600)
+  fig.OuterPosition = [0 0 3 3]*1.5;
+  exportgraphics(gcf,'DynamicROC.pdf','Resolution',600)
 end
 
 % area under ROC using trapezoid rule

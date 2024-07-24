@@ -30,7 +30,7 @@ info.OGanatomy  = 'icbm152anatomy';
 info.SourceType = 'surface';
 
 info.nTrials    = 1;
-info.SNRvals    = [inf,30,20];
+info.SNRvals    = [inf];
 
 info.ProtocolFun   = 'Protocol04';
 

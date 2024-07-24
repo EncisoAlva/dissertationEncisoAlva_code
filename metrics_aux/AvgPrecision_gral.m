@@ -119,20 +119,19 @@ if meta.info.debugFigs
   for bb = 0:0.2:1
     [~, ii] = min(abs(bb-Beta));
     text(rec(ii), pre(ii),  ...
-      ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex',...
-      'BackgroundColor', 'white')
+      ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex')
   end
   for bb = 0:.05:1
     [~, ii] = min(abs(bb-Beta));
     scatter(rec(ii), pre(ii), 30,'blue','filled')
   end
-  title('Precision-Recall Curve')
+  title('Dynamic Precision-Recall Curve')
   set(gcf,'color','w');
   set(gca,'LooseInset',get(gca,'TightInset'))
   fig = gcf;
   fig.Units = 'inches';
-  fig.OuterPosition = [0 0 3 3]*2;
-  exportgraphics(gcf,'PRC.pdf','Resolution',600)
+  fig.OuterPosition = [0 0 3 3]*1.5;
+  exportgraphics(gcf,'DynamicPRC.pdf','Resolution',600)
 end
 
 % area under ROC using trapezoid rule

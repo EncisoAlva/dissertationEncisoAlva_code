@@ -92,6 +92,8 @@ end
 rec = TP ./ ( TP + FN +1 ); % the +1 is to avoid NaNs
 pre = TP ./ ( TP + FP +1 );
 
+pre(end) = pre(end-1);
+
 if meta.info.debugFigs
   figure()
   tiledlayout(1,2)
@@ -115,24 +117,25 @@ if meta.info.debugFigs
   grid on
   xlabel('Recall = TP/(TP+FN)', 'Interpreter','latex')
   ylabel('Precision = TP/(TP+FP)', 'Interpreter','latex')
+  xlim([0,1])
+  ylim([0,1])
   %
   hold on
   for bb = 0:0.2:1
     [~, ii] = min(abs(bb-Beta));
     text(rec(ii), pre(ii),  ...
-      ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex',...
-      'BackgroundColor', 'white')
+      ['$\beta = {',num2str(bb),'}$'], 'Interpreter','latex')
   end
   for bb = 0:.05:1
     [~, ii] = min(abs(bb-Beta));
-    scatter(rec(ii), pre(ii), 30,'blue','filled')
+    scatter(rec(ii), pre(ii), 15,'blue','filled')
   end
   title('Precision-Recall Curve')
   set(gcf,'color','w');
   set(gca,'LooseInset',get(gca,'TightInset'))
   fig = gcf;
   fig.Units = 'inches';
-  fig.OuterPosition = [0 0 3 3]*2;
+  fig.OuterPosition = [0 0 3 3]*1.5;
   exportgraphics(gcf,'PRC.pdf','Resolution',600)
 end
 

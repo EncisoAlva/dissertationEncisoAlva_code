@@ -144,6 +144,88 @@ for solverIDX = 1:nSolvers
       solution = feval(currSolver, meta, info, result, params.(currSolver));
       % debug figures
       if info.debugFigs && (caseIDX < 2 )
+        % REFERENCE SOURCES 
+        Junit = zeros(meta.nGridDips,1);
+        Junit(result.data.idxShort) = result.data.normJshort;
+        %Junit = solution.normJ/max(solution.normJ(:));
+        figure()
+        trisurf(meta.Cortex.Faces, ...
+          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+          'FaceColor', [1,1,1]*153/255, ...
+          'EdgeColor', ...
+          'none', 'FaceAlpha', 1 )
+        view([ 90  90]) % top
+        camlight('headlight', 'infinite')
+        material dull
+        %
+        hold on
+        trisurf(meta.Cortex.Faces, ...
+          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+          'FaceColor', 'interp', ...
+          'FaceVertexCData', Junit, ...
+          'EdgeColor', 'none', ...
+          'FaceAlpha', 'interp', ...
+          'FaceVertexAlphaData', 1*(Junit>0.05) )
+        material dull
+        %colormap("turbo")
+        colormap("parula")
+        clim([0,1])
+        %
+        grid off
+        set(gca,'DataAspectRatio',[1 1 1])
+        set(gca,'XColor', 'none','YColor','none','ZColor','none')
+        set(gca, 'color', 'none');
+        set(gcf,'color','w');
+        set(gca,'LooseInset',get(gca,'TightInset'))
+        %
+        b = colorbar;
+        b.Label.String = 'Unitless; range=[0,1]';
+        %
+        fig = gcf;
+        fig.Units = 'inches';
+        fig.OuterPosition = [0 0 3 3];
+        exportgraphics(gcf,[currSolver, '_ReferenceExample.pdf'],'Resolution',600)
+        %
+        % 50% 
+        Junit = 1*(Junit > 0.5 );
+        %
+        figure()
+        trisurf(meta.Cortex.Faces, ...
+          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+          'FaceColor', [1,1,1]*153/255, ...
+          'EdgeColor', ...
+          'none', 'FaceAlpha', 1 )
+        view([ 90  90]) % top
+        camlight('headlight', 'infinite')
+        material dull
+        %
+        hold on
+        trisurf(meta.Cortex.Faces, ...
+          meta.Cortex.Vertices(:,1), meta.Cortex.Vertices(:,2), meta.Cortex.Vertices(:,3), ...
+          'FaceColor', 'interp', ...
+          'FaceVertexCData', Junit, ...
+          'EdgeColor', 'none', ...
+          'FaceAlpha', 'interp', ...
+          'FaceVertexAlphaData', 1*(Junit>0.05) )
+        material dull
+        %colormap("turbo")
+        colormap("parula")
+        clim([0,1])
+        %
+        grid off
+        set(gca,'DataAspectRatio',[1 1 1])
+        set(gca,'XColor', 'none','YColor','none','ZColor','none')
+        set(gca, 'color', 'none');
+        set(gcf,'color','w');
+        set(gca,'LooseInset',get(gca,'TightInset'))
+        %
+        b = colorbar;
+        b.Label.String = 'Unitless; range=[0,1]';
+        %
+        fig = gcf;
+        fig.Units = 'inches';
+        fig.OuterPosition = [0 0 3 3];
+        exportgraphics(gcf,[currSolver, '_Reference_50perc_Example.pdf'],'Resolution',600)
         % ESTIMATED SOURCES 
         Junit = solution.normJ/max(solution.normJ(:));
         figure()
@@ -177,7 +259,7 @@ for solverIDX = 1:nSolvers
         set(gca,'LooseInset',get(gca,'TightInset'))
         %
         b = colorbar;
-        b.Label.String = 'Unitless; range=[0,120]';
+        b.Label.String = 'Unitless; range=[0,1]';
         %
         fig = gcf;
         fig.Units = 'inches';
