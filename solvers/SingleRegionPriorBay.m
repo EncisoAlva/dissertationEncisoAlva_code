@@ -115,7 +115,8 @@ end
 % at this point, the solution was already computed
 solution.algTime = toc(parTic);
 
-solution.J = diag(meta.ColumnNorm.^-1) * J;
+%solution.J = diag(meta.ColumnNorm.^-1) * J;
+solution.J = J;
 
 % norm of J
 switch meta.Type

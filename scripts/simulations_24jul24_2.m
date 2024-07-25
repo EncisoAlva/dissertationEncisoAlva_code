@@ -1,4 +1,4 @@
-% Round of simulations started on April/26/2024
+% Round of simulations started on May/08/2024
 %
 % Using dipoles at the cortical surface, normal to the cortex. EEG
 % electrodes are based on 10-10 system (92 electrodes) over ICBM152.
@@ -27,13 +27,13 @@ info = [];
 info.OGforward  = 'asa_10_10_srf_BEM';
 info.OGanatomy  = 'icbm152anatomy';
 
-info.SourceType = 'volume';
+info.SourceType = 'surface';
 
 info.nTrials    = 500;
 info.SNRvals    = [inf,30,20,0];
 
 info.ProtocolFun   = 'Protocol04';
-info.tagName       = 'protocol04_volf5k';
+info.tagName       = 'protocol04_surf5k';
 
 info.maxDepth  = 25; % unit: mm
 info.maxKappa  = 10*sqrt(6/pi); % unit: mm

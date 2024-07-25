@@ -217,10 +217,10 @@ for q = 1:size(meta.Leadfield,2)
 end
 
 % SVD decomposition of leadfield matrix
-%[U,S,V] = svd(meta.Leadfield,'vector');
-%meta.U  = U;
-%meta.S  = S;
-%meta.V  = V;
+[U,S,V] = svd(meta.Leadfield,'vector');
+meta.U  = U;
+meta.S  = S;
+meta.V  = V;
 
 % redundancy
 meta.info = info;

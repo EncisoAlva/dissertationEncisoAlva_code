@@ -24,15 +24,16 @@
 info = [];
 
 % forward model
-info.OGforward  = 'subject17_ECOG_BEM';
+info.OGforward  = 'subject17_ECOG_BEM_5K';
 info.OGanatomy  = 'Yucatan_anatomy';
 
 info.SourceType = 'volume';
 
-info.nTrials    = 200;
+info.nTrials    = 500;
 info.SNRvals    = [inf, 20, 10, 0];
 
 info.ProtocolFun   = 'Protocol04';
+info.tagName       = 'protocol04_vol5k_pig';
 
 info.maxDepth  = Inf; % unit: mm
 info.maxKappa  = 10*((3)*3/(4*pi))^(1/3); % unit: mm
@@ -50,50 +51,36 @@ info.print_all = false;
 
 %% SQUARE PROFILE
 
-info.BaseName   = 'pig_100_square';
+info.BaseName      = [info.tagName, '_square'];
 info.SourceProfile = 'square';
 
-%generator(info);
+generator(info);
 evaluator(info);
 collector(info);
 
 %% GAUSSIAN PROFILE
 
-info.BaseName   = 'pig_100_gauss';
+info.BaseName      = [info.tagName, '_gauss'];
 info.SourceProfile = 'gauss';
 
-%generator(info);
+generator(info);
 evaluator(info);
 collector(info);
 
 %% EXPONENTIAL PROFILE
 
-info.BaseName   = 'pig_100_exp';
+info.BaseName      = [info.tagName, '_exp'];
 info.SourceProfile = 'exp';
 
-%generator(info);
+generator(info);
 evaluator(info);
 collector(info);
 
 %% POLYNOMIAL PROFILE
 
-info.BaseName   = 'pig_100_circ';
+info.BaseName      = [info.tagName, '_circ'];
 info.SourceProfile = 'circ';
 
-%generator(info);
+generator(info);
 evaluator(info);
 collector(info);
-
-
-%% RESET RESULTS
-if false
-  currSolver = 'MSP';
-  params.(currSolver) = [];
-  checklist.(currSolver) = false(nCases,1);
-  checklist.tuned.(currSolver) = false;
-  evaluation.(currSolver) = evaluation.(currSolver)*0;
-  %
-  save("params","params", '-v7.3')
-  save("checklist","checklist")
-  save("evaluation","evaluation")
-end

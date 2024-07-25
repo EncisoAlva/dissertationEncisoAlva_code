@@ -1,4 +1,4 @@
-% Round of simulations started on April/26/2024
+% Round of simulations started on May/08/2024
 %
 % Using dipoles at the cortical surface, normal to the cortex. EEG
 % electrodes are based on 10-10 system (92 electrodes) over ICBM152.
@@ -24,7 +24,7 @@
 info = [];
 
 % forward model
-info.OGforward  = 'asa_10_10_srf_BEM';
+info.OGforward  = 'asa_10_10_vol_BEM_5K';
 info.OGanatomy  = 'icbm152anatomy';
 
 info.SourceType = 'volume';
@@ -33,11 +33,10 @@ info.nTrials    = 500;
 info.SNRvals    = [inf,30,20,0];
 
 info.ProtocolFun   = 'Protocol04';
-info.tagName       = 'protocol04_volf5k';
 
-info.maxDepth  = 25; % unit: mm
-info.maxKappa  = 10*sqrt(6/pi); % unit: mm
-info.minKappa  = 10*sqrt(6/pi); % unit: mm
+info.maxDepth  = 20; % unit: mm
+info.maxKappa  = 10*sqrt(10/pi); % unit: mm
+info.minKappa  = 10*sqrt(10/pi); % unit: mm
 
 % for vol:  kap = 30.9 mm  ->  A = 30 cm^2
 % for srf:  kap = 30.9 mm  ->  A = 30 cm^2
@@ -51,7 +50,7 @@ info.print_all = false;
 
 %% SQUARE PROFILE
 
-info.BaseName      = [info.tagName, '_square'];
+info.BaseName   = 'protocol04_shape_square';
 info.SourceProfile = 'square';
 
 generator(info);
@@ -60,7 +59,7 @@ collector(info);
 
 %% GAUSSIAN PROFILE
 
-info.BaseName      = [info.tagName, '_gauss'];
+info.BaseName   = 'protocol04_shape_gauss';
 info.SourceProfile = 'gauss';
 
 generator(info);
@@ -69,7 +68,7 @@ collector(info);
 
 %% EXPONENTIAL PROFILE
 
-info.BaseName      = [info.tagName, '_exp'];
+info.BaseName   = 'protocol04_shape_exp';
 info.SourceProfile = 'exp';
 
 generator(info);
@@ -78,7 +77,7 @@ collector(info);
 
 %% POLYNOMIAL PROFILE
 
-info.BaseName      = [info.tagName, '_circ'];
+info.BaseName   = 'protocol04_shape_circ';
 info.SourceProfile = 'circ';
 
 generator(info);

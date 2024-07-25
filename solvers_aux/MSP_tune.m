@@ -72,6 +72,12 @@ pars.ActiveDips = idx( pars.APM > pars.APMthreshold_non0 );
 
 % another thing to do with APM is to create weights
 pars.W   = 1 - pars.APM *.95; % robustness(?)
+switch info.SourceType
+  case 'surface'
+    % nothing else
+  case 'volume'
+    pars.W = kron( pars.W, eye(3) );
+end
 pars.GWG = meta.Leadfield * diag( pars.W.^(-2) ) * meta.Leadfield';
 
 % hyperparameter tuning via Generalized Cross-Validation

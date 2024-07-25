@@ -83,7 +83,7 @@ while (counter < 20) && ( err>10^-5 )
       Lk = zeros(pars.N*3, 1);
       Lk( (RegIdx-1)*3+[1,2,3] ) = 1;
   end
-  Hs = sparse(g0*eye(pars.N)) + sparse(g1*(1/sum(R1))*(Lk*Lk'));
+  Hs = sparse( sparse(g0*eye(pars.N)) + g1*(1/sum(R1))*sparse((Lk*Lk')) );
 
   % new solution
   newJ = Hs * meta.Leadfield' * ...
@@ -106,10 +106,8 @@ while (counter < 20) && ( err>10^-5 )
 end
 
 % solution per se
-J = oldJ;
+solution.J = oldJ;
 solution.algTime = toc(parTic);
-
-solution.J = diag(meta.ColumnNorm.^-1) * J;
 
 % norm of J
 switch meta.Type

@@ -29,8 +29,8 @@ info.OGanatomy  = 'icbm152anatomy';
 
 info.SourceType = 'surface';
 
-info.nTrials    = 50;
-info.SNRvals    = [inf,30,20];
+info.nTrials    = 500;
+info.SNRvals    = [inf,30,20,0];
 
 info.ProtocolFun   = 'Protocol04';
 
@@ -53,7 +53,7 @@ info.print_all = false;
 info.BaseName   = 'protocol04_shape_square';
 info.SourceProfile = 'square';
 
-%generator(info);
+generator(info);
 evaluator(info);
 collector(info);
 
@@ -62,7 +62,7 @@ collector(info);
 info.BaseName   = 'protocol04_shape_gauss';
 info.SourceProfile = 'gauss';
 
-%generator(info);
+generator(info);
 evaluator(info);
 collector(info);
 
@@ -71,7 +71,7 @@ collector(info);
 info.BaseName   = 'protocol04_shape_exp';
 info.SourceProfile = 'exp';
 
-%generator(info);
+generator(info);
 evaluator(info);
 collector(info);
 
@@ -80,20 +80,6 @@ collector(info);
 info.BaseName   = 'protocol04_shape_circ';
 info.SourceProfile = 'circ';
 
-%generator(info);
+generator(info);
 evaluator(info);
 collector(info);
-
-
-%% RESET RESULTS
-if false
-  currSolver = 'MSP';
-  params.(currSolver) = [];
-  checklist.(currSolver) = false(nCases,1);
-  checklist.tuned.(currSolver) = false;
-  evaluation.(currSolver) = evaluation.(currSolver)*0;
-  %
-  save("params","params", '-v7.3')
-  save("checklist","checklist")
-  save("evaluation","evaluation")
-end
