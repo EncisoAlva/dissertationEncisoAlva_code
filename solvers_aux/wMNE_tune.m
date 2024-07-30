@@ -35,6 +35,8 @@ GCV_alpha  = best_alpha;
 
 pars.alpha = max(GCV_alpha, 0.001);
 
+pars.kernel = meta.LeadfieldColNorm' * pinv( eye(pars.m) * pars.alpha + meta.LeadfieldColNorm * meta.LeadfieldColNorm' );
+
 % stop timer
 pars.parTime = toc(parTic);
 

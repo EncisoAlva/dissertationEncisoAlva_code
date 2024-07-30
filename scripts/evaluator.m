@@ -272,7 +272,8 @@ for solverIDX = 1:nSolvers
         currEval = EvalNames{evalIDX};
         evaluation.(currSolver).(currEval)(caseIDX) = ...
           feval( currEval, meta, info, result, solution );
-      end
+      end 
+      meta.nGridDips
       evaluation.(currSolver).Run_Time(caseIDX) = ...
         solution.algTime;
       %evaluation.(currSolver).ParTune_Time(caseIDX) = ...

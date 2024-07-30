@@ -79,11 +79,13 @@ while (counter < 20) && ( err>10^-5 )
     case 'surface'
       Lk = zeros(pars.N, 1);
       Lk( R1 ) = 1;
+      nu = pars.N;
     case 'volume'
       Lk = zeros(pars.N*3, 1);
-      Lk( (RegIdx-1)*3+[1,2,3] ) = 1;
+      Lk( (kron(R1, [1,1,1]'))>0 ) = 1;
+      nu = pars.N*3;
   end
-  Hs = sparse( sparse(g0*eye(pars.N)) + g1*(1/sum(R1))*sparse((Lk*Lk')) );
+  Hs = sparse( sparse(g0*eye(nu)) + g1*(1/sum(R1))*sparse((Lk*Lk')) );
 
   % new solution
   newJ = Hs * meta.Leadfield' * ...

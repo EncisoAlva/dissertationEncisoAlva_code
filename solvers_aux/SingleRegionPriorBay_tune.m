@@ -7,8 +7,8 @@ parTic = tic;
 pars   = [];
 
 % general values
-pars.M = size(meta.Leadfield, 1);
-pars.N = size(meta.Leadfield, 2);
+pars.M = meta.nChans;
+pars.N = meta.nGridDips;
 pars.T = size(result.data.time, 2);
 
 % hot start: the MNE solution
@@ -25,10 +25,23 @@ end
 prob_R0 = ones( pars.N, 1 )*0.5;
 prob_R1 = ones( pars.N, 1 )*0.5;
 prob_R0( Jnorm <  mean(Jnorm) ) = .99;
-prob_R0( Jnorm <  mean(Jnorm) ) = .99;
+prob_R1( Jnorm >  mean(Jnorm) ) = .99;
 %
-ab0 = gamfit( Jnorm(prob_R0> prob_R1) );
-ab1 = gamfit( Jnorm(prob_R0<=prob_R1) );
+if ( sum( (prob_R0> prob_R1)*1 ) < 10 )||( sum( (prob_R0<=prob_R1)*1 ) < 10 )
+  %break
+  ab0_ = [1,1];
+  ab1_ = [1,1];
+end
+ab0_ = gamfit( Jnorm(prob_R0> prob_R1) );
+ab1_ = gamfit( Jnorm(prob_R0<=prob_R1) );
+if any(isnan(ab0_)) || any(isnan(ab1_))
+  %break
+  ab0 = [1,1];
+  ab1 = [1,1];
+else
+  ab0 = ab0_;
+  ab1 = ab1_;
+end
 %
 best_lambda = median(meta.S)^2;
 
@@ -78,8 +91,18 @@ while (counter < 20) && ( err>10^-5 )
     end
     prob_R0 = prob_R0_new;
     prob_R1 = prob_R1_new;
-    ab0 = gamfit( Jnorm(prob_R0> prob_R1) );
-    ab1 = gamfit( Jnorm(prob_R0<=prob_R1) );
+    %
+    if ( sum( (prob_R0> prob_R1)*1 ) < 10 )||( sum( (prob_R0<=prob_R1)*1 ) < 10 )
+      break
+    end
+    ab0_ = gamfit( Jnorm(prob_R0> prob_R1) );
+    ab1_ = gamfit( Jnorm(prob_R0<=prob_R1) );
+    if any(isnan(ab0_)) || any(isnan(ab1_))
+      break
+    else
+      ab0 = ab0_;
+      ab1 = ab1_;
+    end
   end
   disp([ab0, ab1])
 
@@ -90,12 +113,15 @@ while (counter < 20) && ( err>10^-5 )
     case 'surface'
       Lk = zeros(pars.N, 1);
       Lk( R1 ) = 1;
+      nu = pars.N;
     case 'volume'
       Lk = zeros(pars.N*3, 1);
-      Lk( (RegIdx-1)*3+[1,2,3] ) = 1;
+      Lk( (kron(R1, [1,1,1]'))>0 ) = 1;
+      nu = pars.N*3;
   end
-  Hs = sparse( ab0(1)*(ab0(2)^2)*eye(pars.N)) + sparse(ab1(1)*(ab1(2)^2)*(1/sum(R1))*(Lk*Lk'));
-  As = sparse( sparse(eye(pars.N)) - sparse((1/sum(R1))*(Lk*Lk')) );
+  Hs = sparse( ab0(1)*(ab0(2)^2)*eye(nu)) + ...
+      sparse(ab1(1)*(ab1(2)^2)*(1/sum(R1))*(Lk*Lk'));
+  %As = sparse( sparse(eye(nu)) - sparse((1/sum(R1))*(Lk*Lk')) );
 
   % hyperparameter tuning via Generalized Cross-Validation
   % provisional, just to obtain the region properly
@@ -152,7 +178,7 @@ if info.debugFigs
   scatter3(meta.Gridloc(:,1), meta.Gridloc(:,2), meta.Gridloc(:,3), ...
     40, Jnorm/max(Jnorm),'filled')
   colormap("parula")
-  caxis([0,1])
+  clim([0,1])
   scatter3( result.data.TrueCent(1), result.data.TrueCent(2), result.data.TrueCent(3), ...
     200, 'red','filled')
   title("Normalized magnitude of estimated sources")
@@ -166,7 +192,7 @@ if info.debugFigs
   scatter3(meta.Gridloc(:,1), meta.Gridloc(:,2), meta.Gridloc(:,3), ...
     40, prob_R0,'filled')
   colormap("parula")
-  caxis([0,1])
+  clim([0,1])
   scatter3( result.data.TrueCent(1), result.data.TrueCent(2), result.data.TrueCent(3), ...
     200, 'red','filled')
   title("Probabilities for R0")
@@ -179,7 +205,7 @@ if info.debugFigs
   scatter3(meta.Gridloc(:,1), meta.Gridloc(:,2), meta.Gridloc(:,3), ...
     40, prob_R1,'filled')
   colormap("parula")
-  caxis([0,1])
+  clim([0,1])
   scatter3( result.data.TrueCent(1), result.data.TrueCent(2), result.data.TrueCent(3), ...
     200, 'red','filled')
   title("Probabilities for R1")
@@ -194,7 +220,7 @@ if info.debugFigs
   scatter3(meta.Gridloc(R1,1), meta.Gridloc(R1,2), meta.Gridloc(R1,3), ...
     40, gamcdf(Jnorm(R1), ab1(1),ab1(2)),'filled')
   colormap("parula")
-  caxis([0,1])
+  clim([0,1])
   scatter3( result.data.TrueCent(1), result.data.TrueCent(2), result.data.TrueCent(3), ...
     200, 'red','filled')
   title("pdf_{gam}( ||J|| )")

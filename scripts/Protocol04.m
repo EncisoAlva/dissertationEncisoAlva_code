@@ -323,13 +323,8 @@ if info.debugFigs
 end
 
 % patch
-switch info.SourceType
-  case 'surface'
-    if size(RES.Jshort, 2) ~= 1
-      RES.Jshort = RES.Jshort';
-    end
-  case 'volume'
-    % nothing
+if size(RES.Jshort, 2) ~= length(RES.time)
+  RES.Jshort = RES.Jshort';
 end
 
 % Y, noiseless

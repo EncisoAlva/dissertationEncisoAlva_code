@@ -7,16 +7,17 @@ parTic = tic;
 pars   = [];
 
 % general values
-pars.m  = size(meta.Leadfield, 1);
-pars.n  = size(meta.Leadfield, 2);
+pars.m  = meta.nChans;
+pars.n  = meta.nGridDips;
 pars.t  = size(result.data.time, 2);
 
 % find an appropriate number of eigenvalues
-tmp = cumsum(meta.S) / sum(meta.S);
+[pars.Unorm,pars.Snorm,~] = svd(meta.LeadfieldColNorm,'vector');
+tmp = cumsum(pars.Snorm) / sum(pars.Snorm);
 pars.s = find( tmp > 0.9, 1 );
 
 % project measurements over the first s eigenvectors of G
-Us = meta.U(:, (1:pars.s));
+Us = pars.Unorm(:, (1:pars.s));
 Ys = Us * Us' * result.data.Y / norm( result.data.Y );
 
 % project G into the projection of Y
@@ -24,8 +25,18 @@ Ps = Ys * pinv( Ys'*Ys ) * Ys';
 
 % Activation Probability Map (APM) is defined as follows
 D = zeros( meta.nGridDips, 1 );
-for ii = 1:meta.nGridDips
-  D(ii) = norm( Ps * meta.Leadfield(:,ii), 2 )^2;
+switch info.SourceType
+  case 'surface'
+    for ii = 1:meta.nGridDips
+      D(ii) = norm( Ps * meta.LeadfieldColNorm(:,ii), 2 )^2;
+    end
+  case 'volume'
+    for ii = 1:meta.nGridDips
+      D(ii) = 0;
+      for tt = 1:3
+          D(ii) = D(ii) + norm( Ps * meta.LeadfieldColNorm(:,3*(ii-1)+tt), 2 )^2/3;
+      end
+    end
 end
 pars.APM = D;
 if info.debugFigs
@@ -71,18 +82,18 @@ idx = 1:meta.nGridDips;
 pars.ActiveDips = idx( pars.APM > pars.APMthreshold_non0 );
 
 % another thing to do with APM is to create weights
-pars.W   = 1 - pars.APM *.95; % robustness(?)
+pars.W   = 1 - pars.APM *.99; % robustness(?)
 switch info.SourceType
   case 'surface'
     % nothing else
   case 'volume'
-    pars.W = kron( pars.W, eye(3) );
+    pars.W = kron( pars.W, [1,1,1]' );
 end
-pars.GWG = meta.Leadfield * diag( pars.W.^(-2) ) * meta.Leadfield';
+pars.GWG = meta.LeadfieldColNorm * diag( pars.W.^(-2) ) * meta.Leadfield';
 
 % hyperparameter tuning via Generalized Cross-Validation
 % starting at median eigenvalue
-best_alpha = median(meta.S)^2;
+best_alpha = median(pars.Snorm)^2;
 scale  = 10;
 for iter = 1:6
   % try many values for alpha, compute GCV value for each, get the min
@@ -103,7 +114,7 @@ for iter = 1:6
   end
 end
 pars.alpha  = max(best_alpha, 0.001);
-pars.kernel = diag( pars.W.^(-2) ) * meta.Leadfield' * pinv( pars.GWG + pars.alpha*eye(pars.m) );
+pars.kernel = diag( pars.W.^(-2) ) * meta.LeadfieldColNorm' * pinv( pars.GWG + pars.alpha*eye(pars.m) );
 
 % stop timer
 pars.parTime = toc(parTic);

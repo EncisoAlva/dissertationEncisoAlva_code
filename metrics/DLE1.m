@@ -8,7 +8,7 @@ function metric = DLE1( meta, info, result, solution )
 [~, pkIDX] = ind2sub( size(solution.normJ) ,IDX);
 
 % center of mass of J at the peak
-estCenter = solution.normJ(:,pkIDX)' * meta.Gridloc / sum( solution.normJ );
+estCenter = solution.normJ(:,pkIDX)' * meta.Gridloc / sum( solution.normJ(:) );
 
 % reference center of mass
 refCenter = result.data.TrueCent;

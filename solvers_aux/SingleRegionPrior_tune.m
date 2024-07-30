@@ -7,8 +7,8 @@ parTic = tic;
 pars   = [];
 
 % general values
-pars.M = size(meta.Leadfield, 1);
-pars.N = size(meta.Leadfield, 2);
+pars.M = meta.nChans;
+pars.N = meta.nGridDips;
 pars.T = size(result.data.time, 2);
 
 % hot start: the MNE solution
@@ -107,12 +107,14 @@ while (counter < 20) && ( err>10^-5 )
     case 'surface'
       Lk = zeros(pars.N, 1);
       Lk( R1 ) = 1;
+      nu = pars.N;
     case 'volume'
       Lk = zeros(pars.N*3, 1);
-      Lk( (RegIdx-1)*3+[1,2,3] ) = 1;
+      Lk( (kron(R1, [1,1,1]'))>0 ) = 1;
+      nu = pars.N*3;
   end
-  Hs = sparse(g0*eye(pars.N)) + sparse(g1*(1/sum(R1))*(Lk*Lk'));
-  As = sparse( sparse(eye(pars.N)) - sparse((1/sum(R1))*(Lk*Lk')) );
+  Hs = sparse(g0*eye(nu)) + sparse(g1*(1/sum(R1))*(Lk*Lk'));
+  %As = sparse( sparse(eye(pars.N)) - sparse((1/sum(R1))*(Lk*Lk')) );
 
   % hyperparameter tuning via Generalized Cross-Validation
   % provisional, just to obtain the region properly

@@ -7,7 +7,7 @@ solution = [];
 parTic = tic;
 
 % project measurements over the first s eigenvectors of G
-Us = meta.U(:, (1:pars.s));
+Us = pars.Unorm(:, (1:pars.s));
 Ys = Us * Us' * result.data.Y / norm( result.data.Y );
 
 % project G into the projection of Y
@@ -15,17 +15,33 @@ Ps = Ys * pinv( Ys'*Ys ) * Ys';
 
 % Activation Probability Map (APM) is defined as follows
 D = zeros( meta.nGridDips, 1 );
-for ii = 1:meta.nGridDips
-  D(ii) = norm( Ps * meta.Leadfield(:,ii), 2 )^2;
+switch info.SourceType
+  case 'surface'
+    for ii = 1:meta.nGridDips
+      D(ii) = norm( Ps * meta.LeadfieldColNorm(:,ii), 2 )^2;
+    end
+  case 'volume'
+    for ii = 1:meta.nGridDips
+      D(ii) = 0;
+      for tt = 1:3
+          D(ii) = D(ii) + norm( Ps * meta.LeadfieldColNorm(:,3*(ii-1)+tt), 2 )^2/3;
+      end
+    end
 end
 APM = D;
 
 % another thing to do with APM is to create weights
-W   = 1 - APM *.95; % robustness(?)
-GWG = meta.Leadfield * diag( W.^(-2) ) * meta.Leadfield';
+W   = 1 - APM *.99; % robustness(?)
+switch info.SourceType
+  case 'surface'
+    % nothing else
+  case 'volume'
+    W = kron( W, [1,1,1]' );
+end
+GWG = meta.LeadfieldColNorm * diag( W.^(-2) ) * meta.LeadfieldColNorm';
 
 % solution per se
-kernel = diag( W.^(-2) ) * meta.Leadfield' * pinv( GWG + pars.alpha*eye(pars.m) );
+kernel = diag( W.^(-2) ) * meta.LeadfieldColNorm' * pinv( GWG + pars.alpha*eye(pars.m) );
 J = kernel* result.data.Y;
 solution.algTime = toc(parTic);
 

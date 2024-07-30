@@ -45,6 +45,9 @@ meta.Scalp.Vertices  = head.Vertices*1000;
 meta.Scalp.Faces     = head.Faces;
 meta.Scalp.Normals   = head.VertNormals;
 
+% remove removed channels (absent by default, didn't noticed before)
+forward.Gain(any(isnan(forward.Gain), 2), :) = [];
+
 % leadfield matrix and general info
 meta.nChans  = size(forward.Gain,1);
 meta.Gridloc = forward.GridLoc*1000; % standard unit is m, changed to mm

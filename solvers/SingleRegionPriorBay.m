@@ -20,7 +20,7 @@ end
 prob_R0 = ones( pars.N, 1 )*0.5;
 prob_R1 = ones( pars.N, 1 )*0.5;
 prob_R0( Jnorm <  mean(Jnorm) ) = .99;
-prob_R0( Jnorm <  mean(Jnorm) ) = .99;
+prob_R1( Jnorm >  mean(Jnorm) ) = .99;
 %
 ab0 = pars.ab0;
 ab1 = pars.ab1;
@@ -73,8 +73,17 @@ while (counter < 20) && ( err>10^-5 )
     end
     prob_R0 = prob_R0_new;
     prob_R1 = prob_R1_new;
-    ab0 = gamfit( Jnorm(prob_R0> prob_R1) );
-    ab1 = gamfit( Jnorm(prob_R0<=prob_R1) );
+    if ( sum( (prob_R0> prob_R1)*1 ) < 10 )||( sum( (prob_R0<=prob_R1)*1 ) < 10 )
+        break
+    end
+    ab0_ = gamfit( Jnorm(prob_R0> prob_R1) );
+    ab1_ = gamfit( Jnorm(prob_R0<=prob_R1) );
+    if any(isnan(ab0_)) || any(isnan(ab1_))
+      break
+    else
+      ab0 = ab0_;
+      ab1 = ab1_;
+    end
   end
   disp([ab0, ab1])
 
@@ -85,12 +94,15 @@ while (counter < 20) && ( err>10^-5 )
     case 'surface'
       Lk = zeros(pars.N, 1);
       Lk( R1 ) = 1;
+      nu = pars.N;
     case 'volume'
       Lk = zeros(pars.N*3, 1);
-      Lk( (RegIdx-1)*3+[1,2,3] ) = 1;
+      Lk( (kron(R1, [1,1,1]'))>0 ) = 1;
+      nu = pars.N*3;
   end
-  Hs = sparse( ab0(1)*(ab0(2)^2)*eye(pars.N)) + sparse(ab1(1)*(ab1(2)^2)*(1/sum(R1))*(Lk*Lk'));
-  As = sparse( sparse(eye(pars.N)) - sparse((1/sum(R1))*(Lk*Lk')) );
+  Hs = sparse( ab0(1)*(ab0(2)^2)*eye(nu)) + ...
+      sparse(ab1(1)*(ab1(2)^2)*(1/sum(R1))*(Lk*Lk'));
+  %As = sparse( sparse(eye(pars.N)) - sparse((1/sum(R1))*(Lk*Lk')) );
 
   % new solution
   newJ = Hs * meta.Leadfield' * ...

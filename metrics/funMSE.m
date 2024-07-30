@@ -1,4 +1,4 @@
-function metric = RMSE( meta, info, result, solution )
+function metric = funMSE( meta, info, result, solution )
 % Relative Mean Square Error
 %    || J^ - J ||_2 / || J ||_2
 
@@ -17,9 +17,9 @@ switch info.SourceType
     refJ( result.data.idxShortG ) = result.data.Jshort;
 end
 %
-relRMSE = norm( estJ - refJ, 2)  / norm( refJ, 2 );
+funMSE = norm( meta.Leadfield*(estJ - refJ), 2)  / norm( meta.Leadfield*refJ, 2 );
 
 % Distance Localisation Error for one single point
-metric = relRMSE;
+metric = funMSE;
 
 end

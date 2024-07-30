@@ -29,7 +29,7 @@ info.OGanatomy  = 'Yucatan_anatomy';
 
 info.SourceType = 'volume';
 
-info.nTrials    = 500;
+info.nTrials    = 100;
 info.SNRvals    = [inf, 20, 10, 0];
 
 info.ProtocolFun   = 'Protocol04';
@@ -84,3 +84,7 @@ info.SourceProfile = 'circ';
 generator(info);
 evaluator(info);
 collector(info);
+
+%% CLOSE BROKEN WAITBARS
+F = findall(0,'type','figure','tag','TMWWaitbar');
+delete(F)
