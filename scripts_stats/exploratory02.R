@@ -1,19 +1,26 @@
 library("ggpubr")
 library("readxl")
+library("tidyverse")
+library("plyr")
+library("latex2exp")
 
 # dataset to analyze
-#tagname = 'EvalMetrics_Protocol04_30'
-tagname = 'EvalMetrics_protocol04_vol5k_pig'
+tagname = 'EvalMetrics_Protocol04_30'
+#tagname = 'EvalMetrics_protocol04_vol5k_pig'
 
 # current directory
 script_dir = getwd()
 
 # data path
 setwd('..')
-data_path = paste0( getwd(), '/stats/' )
+data_path = paste0( getwd(), '/stats - Copy/' )
 setwd( script_dir )
 
 ################################################################################
+
+# ALL PROFILES COMBINED
+table = read_excel( paste(data_path, tagname, "_ALL.xlsx", sep = "") )
+title_text = "Polynomial profile"
 
 # SQUARE PROFILE
 table = read_excel( paste(data_path, tagname, "_square.xlsx", sep = "") )
@@ -36,72 +43,100 @@ title_text = "Polynomial profile"
 
 # format (hard-coded for now)
 table$SNR = factor(table$SNR, 
-                   levels = c( "Inf", "30", "20", "10", "0" ) 
+                   levels = c( "Inf", "30", "20", "10", "0", "-10" ) 
 )
 table$HalfMax = table$HalfMax/1000
 
+table$Solver = factor(table$Solver, 
+                   levels = c( "Tikhonov", "MSP", "sLORETA", "zSISSY", "SingleRegionPrior") 
+)
+table$Solver = revalue(table$Solver, 
+                      c( "Tikhonov"= "WMNE", "zSISSY"="SISSY", 
+                         "SingleRegionPrior" = "Proposed") 
+)
+
 ################################################################################
-# WHICH LEVEL OF NOISE IS OK ?
 
-# noiseless
-p <- ggviolin(table[ table$SNR=="Inf", ], 
-              x = "Solver",
-              y = "DLE1",
-              add = "mean_sd") +
+table %>%
+  #drop_na() %>%
+  filter( SNR=="30" ) %>%
+  ggviolin(x = "Solver",
+           y = "DLE1",
+           add = "mean_sd") +
   ylab("Distance Localization Eror [mm]") +
-  ggtitle("Noiseless case, SNR = Inf dB") +
-  grids()
-p
+  #ggtitle("Noiseless case, SNR = Inf dB") +
+  grids() +
+  theme_bw()
 
-# SNR = 30
-p <- ggviolin(table[ table$SNR=="30", ], 
-              x = "Solver",
-              y = "DLE1",
-              add = "mean_sd") +
-  ylab("Distance Localization Eror [mm]") +
-  ggtitle("Noiseless case, SNR = 30 dB") +
-  grids()
-p
+################################################################################
 
-# SNR = 20
-p <- ggviolin(table[ table$SNR=="20", ], 
-              x = "Solver",
-              y = "DLE1",
-              add = "mean_sd") +
-  ylab("Distance Localization Eror [mm]") +
-  ggtitle("Noiseless case, SNR = 20 dB") +
-  grids()
-p
+setwd(paste0( script_dir, "/img/" ))
 
-# SNR = 10
-p <- ggviolin(table[ table$SNR=="10", ], 
-              x = "Solver",
-              y = "DLE1",
-              add = "mean_sd") +
+table %>%
+  #drop_na() %>%
+  filter( SNR=="30" ) %>% 
+  filter( Solver != "Proposed" ) %>%
+  ggboxplot(x = "Solver",
+           y = "DLE1") +
   ylab("Distance Localization Eror [mm]") +
-  ggtitle("Noiseless case, SNR = 10 dB") +
-  grids()
-p
+  #ggtitle("Noiseless case, SNR = Inf dB") +
+  #labs(subtitle = ("SNR = 30 [dB]" ) ) +
+  #labs(subtitle = expression( paste("SNR =", infinity, "[dB]") ) ) +
+  grids() +
+  theme_bw()
+ggsave( paste0("plot_",tagname, "DLE", ".pdf"),
+        width = 4.5, height = 3, units = "in")
 
-# SNR = 0
-p <- ggviolin(table[ table$SNR=="0", ], 
-              x = "Solver",
-              y = "DLE1",
-              add = "mean_sd") +
-  ylab("Distance Localization Eror [mm]") +
-  ggtitle("Noiseless case, SNR = 0 dB") +
-  grids()
-p
+table %>%
+  #drop_na() %>%
+  filter( SNR=="30" ) %>%
+  filter( Solver != "Proposed" ) %>%
+  ggboxplot(x = "Solver",
+            y = "SpaDis2") +
+  ylab("Spatial Dispersion [mm]") +
+  #ggtitle("Noiseless case, SNR = Inf dB") +
+  #labs(subtitle = ("SNR = 30 [dB]" ) ) +
+  #labs(subtitle = expression( paste("SNR =", infinity, "[dB]") ) ) +
+  grids() +
+  theme_bw()
+ggsave( paste0("plot_",tagname, "SpaDis", ".pdf"),
+        width = 4.5, height = 3, units = "in")
 
-# SNR = -10
-p <- ggviolin(table[ table$SNR=="-10", ], 
-              x = "Solver",
-              y = "DLE1",
-              add = "mean_sd") +
-  ylab("Distance Localization Eror [mm]") +
-  ggtitle("Noiseless case, SNR = -10 dB") +
-  grids()
-p
+table %>%
+  #drop_na() %>%
+  filter( SNR=="30" ) %>%
+  filter( Solver != "Proposed" ) %>%
+  filter( AUROC_loc>0 ) %>%
+  ggboxplot(x = "Solver",
+            y = "AUROC_loc") +
+  ylab("AUROC (local)") +
+  #ggtitle("Noiseless case, SNR = Inf dB") +
+  #labs(subtitle = ("SNR = 30 [dB]" ) ) +
+  #labs(subtitle = expression( paste("SNR =", infinity, "[dB]") ) ) +
+  grids() +
+  theme_bw()
+ggsave( paste0("plot_",tagname, "AUROC", ".pdf"),
+        width = 4.5, height = 3, units = "in")
+
+table %>%
+  #drop_na() %>%
+  filter( SNR=="30" ) %>%
+  filter( Solver != "Proposed" ) %>%
+  filter( AP_loc>0 ) %>%
+  ggboxplot(x = "Solver",
+            y = "AP_loc") +
+  ylab("Average Precision (local)") +
+  #ggtitle("Noiseless case, SNR = Inf dB") +
+  #labs(subtitle = ("SNR = 30 [dB]" ) ) +
+  #labs(subtitle = expression( paste("SNR =", infinity, "[dB]") ) ) +
+  grids() +
+  theme_bw()
+ggsave( paste0("plot_",tagname, "AvgPre", ".pdf"),
+        width = 4.5, height = 3, units = "in")
+
+################################################################################
+
+
 
 ################################################################################
 # WILL KEEP SNR UP TO 10
@@ -116,6 +151,14 @@ p <- ggviolin(table[ table$SNR %in% c("Inf","30","20","10"), ],
   ggtitle(title_text) +
   grids()
 p
+
+p <- ggbarplot(table[ table$SNR %in% c("Inf","30","20","10"), ], 
+              x = "SNR",
+              y = "DLE1",
+              fill = "Solver") +
+  ylab("Distance Localization Eror [mm]") +
+  ggtitle(title_text) +
+  grids()
 
 # Spatial Dispersion
 p <- ggviolin(table[ table$SNR %in% c("Inf","30","20","10"), ], 
