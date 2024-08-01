@@ -126,6 +126,9 @@ switch info.SourceType
   case 'volume'
     RES.normJshort = dip_norm( RES.Jshort );
 end
+if size(RES.normJshort, 1) ~= 1
+    RES.normJshort = RES.normJshort';
+end
 
 % debug figures
 if info.debugFigs
@@ -350,6 +353,9 @@ RES.YOG = RES.Yclean + 10^(-result.SNR/10) * diag( RES.varY ) * noise;
 RES.Y   = RES.YOG - mean(RES.YOG,1);
 
 % true center of mass
+if size(RES.normJshort,1) ~= length(RES.idxShort)
+    RES.normJshort = RES.normJshort';
+end
 RES.TrueCent = RES.normJshort' * meta.Gridloc(RES.idxShort,:) / sum(RES.normJshort);
 
 end

@@ -84,3 +84,7 @@ info.SourceProfile = 'circ';
 generator(info);
 evaluator(info);
 collector(info);
+
+%% CLOSE BROKEN WAITBARS
+F = findall(0,'type','figure','tag','TMWWaitbar');
+delete(F)

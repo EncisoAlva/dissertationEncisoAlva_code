@@ -4,6 +4,7 @@ library("tidyverse")
 library("plyr")
 library("latex2exp")
 library("patchwork")
+library("corrr")
 
 # dataset to analyze
 tagname = 'EvalMetrics_Protocol04_30'
@@ -24,20 +25,20 @@ table = read_excel( paste(data_path, tagname, "_ALL.xlsx", sep = "") )
 title_text = "All profiles"
 
 # SQUARE PROFILE
-table = read_excel( paste(data_path, tagname, "_square.xlsx", sep = "") )
-title_text = "Square profile"
+#table = read_excel( paste(data_path, tagname, "_square.xlsx", sep = "") )
+#title_text = "Square profile"
 
 # GAUSS PROFILE
-table = read_excel( paste(data_path, tagname, "_gauss.xlsx", sep = "") )
-title_text = "Gaussian profile"
+#table = read_excel( paste(data_path, tagname, "_gauss.xlsx", sep = "") )
+#title_text = "Gaussian profile"
 
 # EXPONENTIAL PROFILE
-table = read_excel( paste(data_path, tagname, "_exp.xlsx", sep = "") )
-title_text = "Exponential profile"
+#table = read_excel( paste(data_path, tagname, "_exp.xlsx", sep = "") )
+#title_text = "Exponential profile"
 
 # POLYNOMIAL PROFILE
-table = read_excel( paste(data_path, tagname, "_circ.xlsx", sep = "") )
-title_text = "Polynomial profile"
+#table = read_excel( paste(data_path, tagname, "_circ.xlsx", sep = "") )
+#title_text = "Polynomial profile"
 
 ################################################################################
 # FORMATTING
@@ -78,7 +79,7 @@ setwd(paste0( script_dir, "/img/" ))
 G1 = table %>%
   #drop_na() %>%
   filter( SNR=="30" ) %>% 
-  filter( Solver != "Proposed" ) %>%
+  #filter( Solver != "Proposed" ) %>%
   ggboxplot(x = "Solver",
            y = "DLE1") +
   ylab("Distance Localization Eror [mm]") +
@@ -93,7 +94,7 @@ G1 = table %>%
 G2 = table %>%
   #drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  #filter( Solver != "Proposed" ) %>%
   ggboxplot(x = "Solver",
             y = "SpaDis2") +
   ylab("Spatial Dispersion [mm]") +
@@ -108,7 +109,7 @@ G2 = table %>%
 G3 = table %>%
   #drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  #filter( Solver != "Proposed" ) %>%
   filter( AUROC_loc>0 ) %>%
   ggboxplot(x = "Solver",
             y = "AUROC_loc") +
@@ -124,7 +125,7 @@ G3 = table %>%
 G4 = table %>%
   #drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  #filter( Solver != "Proposed" ) %>%
   filter( AP_loc>0 ) %>%
   ggboxplot(x = "Solver",
             y = "AP_loc") +
@@ -137,7 +138,7 @@ G4 = table %>%
 
 ggarrange( G1, G2, G3, G4,
            ncol = 2, nrow = 2, align = "v", common.legend = TRUE, legend="top")
-ggsave( paste0("plot_",tagname, "ALL", ".pdf"),
+ggsave( paste0("P_plot_",tagname, "ALL", ".pdf"),
         width = 9, height = 6, units = "in")
 
 ################################################################################
@@ -145,8 +146,8 @@ ggsave( paste0("plot_",tagname, "ALL", ".pdf"),
 G1 = table %>%
   #drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver == "SISSY" ) %>%
+  filter( Solver == "Proposed" ) %>%
+  #filter( Solver == "SISSY" ) %>%
   ggscatter(x = "Depth",
             y = "DLE1", 
             color = "Profile",
@@ -164,8 +165,8 @@ G1 = table %>%
 G2 = table %>%
   #drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver == "SISSY" ) %>%
+  filter( Solver == "Proposed" ) %>%
+  #filter( Solver == "SISSY" ) %>%
   ggscatter(x = "Depth",
             y = "SpaDis2", 
             color = "Profile",
@@ -183,8 +184,8 @@ G2 = table %>%
 G3 = table %>%
   #drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver == "SISSY" ) %>%
+  filter( Solver == "Proposed" ) %>%
+  #filter( Solver != "SISSY" ) %>%
   filter( AUROC_loc>0 ) %>%
   ggscatter(x = "Depth",
             y = "AUROC_loc", 
@@ -203,8 +204,8 @@ G3 = table %>%
 G4 = table %>%
   #drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver == "SISSY" ) %>%
+  filter( Solver == "Proposed" ) %>%
+  #filter( Solver == "SISSY" ) %>%
   filter( AP_loc>0 ) %>%
   ggscatter(x = "Depth",
             y = "AP_loc", 
@@ -222,94 +223,8 @@ G4 = table %>%
 
 ggarrange( G1, G2, G3, G4,
            ncol = 2, nrow = 2, align = "v", common.legend = TRUE, legend="top")
-ggsave( paste0("SISSY_scatter_",tagname, ".pdf"),
+ggsave( paste0("P_scatter_",tagname, ".pdf"),
         width = 9, height = 6, units = "in")
-
-################################################################################
-
-G1 = table %>%
-  #drop_na() %>%
-  filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver == "sLORETA" ) %>%
-  ggscatter(x = "Depth",
-            y = "DLE1", 
-            color = "Profile",
-            shape = "Profile") +
-  ylab("Distance Localisation Error [mm]") +
-  xlab("Depth [mm]") +
-  #ggtitle("Noiseless case, SNR = Inf dB") +
-  #labs(subtitle = ("SNR = 30 [dB]" ) ) +
-  #labs(subtitle = expression( paste("SNR =", infinity, "[dB]") ) ) +
-  grids() +
-  theme_bw()
-#ggsave( paste0("SISSY_scatter_",tagname, "DLE", ".pdf"),
-#        width = 4.5, height = 3, units = "in")
-
-G2 = table %>%
-  #drop_na() %>%
-  filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver == "sLORETA" ) %>%
-  ggscatter(x = "Depth",
-            y = "SpaDis2", 
-            color = "Profile",
-            shape = "Profile") +
-  ylab("Spatial Dispersion [mm]") +
-  xlab("Depth [mm]") +
-  #ggtitle("Noiseless case, SNR = Inf dB") +
-  #labs(subtitle = ("SNR = 30 [dB]" ) ) +
-  #labs(subtitle = expression( paste("SNR =", infinity, "[dB]") ) ) +
-  grids() +
-  theme_bw()
-#ggsave( paste0("SISSY_scatter_",tagname, "SpaDis", ".pdf"),
-#        width = 4.5, height = 3, units = "in")
-
-G3 = table %>%
-  #drop_na() %>%
-  filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver == "sLORETA" ) %>%
-  filter( AUROC_loc>0 ) %>%
-  ggscatter(x = "Depth",
-            y = "AUROC_loc", 
-            color = "Profile",
-            shape = "Profile") +
-  ylab("AUROC") +
-  xlab("Depth [mm]") +
-  #ggtitle("Noiseless case, SNR = Inf dB") +
-  #labs(subtitle = ("SNR = 30 [dB]" ) ) +
-  #labs(subtitle = expression( paste("SNR =", infinity, "[dB]") ) ) +
-  grids() +
-  theme_bw()
-#ggsave( paste0("SISSY_scatter_",tagname, "AUROC", ".pdf"),
-#        width = 4.5, height = 3, units = "in")
-
-G4 = table %>%
-  #drop_na() %>%
-  filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver == "sLORETA" ) %>%
-  filter( AP_loc>0 ) %>%
-  ggscatter(x = "Depth",
-            y = "AP_loc", 
-            color = "Profile",
-            shape = "Profile") +
-  ylab("Average Precision") +
-  xlab("Depth [mm]") +
-  #ggtitle("Noiseless case, SNR = Inf dB") +
-  #labs(subtitle = ("SNR = 30 [dB]" ) ) +
-  #labs(subtitle = expression( paste("SNR =", infinity, "[dB]") ) ) +
-  grids() +
-  theme_bw()
-#ggsave( paste0("SISSY_scatter_",tagname, "AUROC", ".pdf"),
-#        width = 4.5, height = 3, units = "in")
-
-ggarrange( G1, G2, G3, G4,
-           ncol = 2, nrow = 2, align = "v", common.legend = TRUE, legend="top")
-ggsave( paste0("sLORETA_scatter_",tagname, ".pdf"),
-        width = 9, height = 6, units = "in")
-
 
 ################################################################################
 # WILL KEEP SNR UP TO 10
@@ -392,8 +307,8 @@ table %>%
 
 table %>%
   na.omit() %>%
-  filter( Solver != "Proposed" ) %>%
-  filter( Solver != "sLORETA" ) %>%
+  filter( Solver == "Proposed" ) %>%
+  #filter( Solver != "sLORETA" ) %>%
   ggline(., x="SNR", y="DLE1", 
          group=interaction("Profile", "idx"), 
          color = "Solver",
@@ -406,7 +321,7 @@ table %>%
 
 
 G1 = table %>%
-  filter( Solver != "Proposed" ) %>%
+  #filter( Solver != "Proposed" ) %>%
   ggline(., x="SNR", y="DLE1", 
          group=interaction("Profile", "idx"), 
          color = "Solver",
@@ -418,7 +333,7 @@ G1 = table %>%
   theme_bw()
 
 G2 = table %>%
-  filter( Solver != "Proposed" ) %>%
+  #filter( Solver != "Proposed" ) %>%
   ggline(., x="SNR", y="SpaDis2", 
          group=interaction("Profile", "idx"), 
          color = "Solver",
@@ -430,7 +345,7 @@ G2 = table %>%
   theme_bw()
 
 G3 = table %>%
-  filter( Solver != "Proposed" ) %>%
+  #filter( Solver != "Proposed" ) %>%
   filter( AUROC_loc>0 ) %>%
   ggline(., x="SNR", y="AUROC_loc", 
          group=interaction("Profile", "idx"), 
@@ -443,7 +358,7 @@ G3 = table %>%
   theme_bw()
 
 G4 = table %>%
-  filter( Solver != "Proposed" ) %>%
+  #filter( Solver != "Proposed" ) %>%
   filter( AP_loc>0 ) %>%
   ggline(., x="SNR", y="AP_loc", 
          group=interaction("Profile", "idx"), 
@@ -457,9 +372,8 @@ G4 = table %>%
 
 ggarrange( G1, G2, G3, G4,
            ncol = 2, nrow = 2, align = "v", common.legend = TRUE, legend="top")
-ggsave( paste0("SNRdegradation_",tagname, ".pdf"),
+ggsave( paste0("P_SNRdegradation_",tagname, ".pdf"),
         width = 9, height = 6, units = "in")
-
 
 ################################################################################
 
@@ -468,7 +382,7 @@ setwd(paste0( script_dir, "/img/" ))
 G1 = table %>%
   drop_na() %>%
   filter( SNR=="30" ) %>% 
-  filter( Solver != "Proposed" ) %>%
+  filter( Solver == "Proposed" ) %>%
   ggboxplot(x = "Solver",
             y = "DLE1", fill="Profile") +
   ylab("Distance Localization Eror [mm]") +
@@ -479,7 +393,7 @@ G1 = table %>%
 G2 = table %>%
   drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  filter( Solver == "Proposed" ) %>%
   ggboxplot(x = "Solver",
             y = "SpaDis2", fill="Profile") +
   ylab("Spatial Dispersion [mm]") +
@@ -489,7 +403,7 @@ G2 = table %>%
 
 G3 = table %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  filter( Solver == "Proposed" ) %>%
   filter( AUROC_loc>0 ) %>%
   drop_na() %>%
   ggboxplot(x = "Solver",
@@ -502,7 +416,7 @@ G3 = table %>%
 G4 = table %>%
   drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  filter( Solver == "Proposed" ) %>%
   filter( AP_loc>0 ) %>%
   ggboxplot(x = "Solver",
             y = "AP_loc", fill="Profile") +
@@ -513,7 +427,7 @@ G4 = table %>%
 
 ggarrange( G1, G2, G3, G4,
            ncol = 2, nrow = 2, align = "v", common.legend = TRUE, legend="top")
-ggsave( paste0("shape_",tagname, "ALL", ".pdf"),
+ggsave( paste0("P_shape_",tagname, "ALL", ".pdf"),
         width = 9, height = 6, units = "in")
 
 ################################################################################
@@ -533,4 +447,3 @@ vars_cor_p = table %>%
   filter( SNR=="20" ) %>%
   select( "DLE1", "SpaDis2", "AUROC_loc", "AP_loc", "Depth" ) %>%
   colpair_map(., calc_ttest_p_value)
-
