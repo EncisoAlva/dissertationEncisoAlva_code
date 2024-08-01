@@ -17,10 +17,10 @@ if local
   idx    = 1:meta.nGridDips;
   switch meta.info.SourceType
     case 'volume'
-      locIDX = idx( vecnorm( meta.Gridloc - result.data.TrueCent , 2, 2 ) < locDist );
+      locIDX = idx( vecnorm( meta.Gridloc - result.data.TrueCent , 2, 2 ) <= locDist );
     case 'surface'
       [~,GraphDist] = shortestpathtree(meta.asGraph, result.idxCent, idx );
-      locIDX = idx( GraphDist < locDist );
+      locIDX = idx( GraphDist <= locDist );
   end
 else
   locIDX = 1:1:meta.nGridDips;
