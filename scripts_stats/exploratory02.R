@@ -468,7 +468,7 @@ setwd(paste0( script_dir, "/img/" ))
 G1 = table %>%
   drop_na() %>%
   filter( SNR=="30" ) %>% 
-  filter( Solver != "Proposed" ) %>%
+  filter( Solver == "SISSY" ) %>%
   ggboxplot(x = "Solver",
             y = "DLE1", fill="Profile") +
   ylab("Distance Localization Eror [mm]") +
@@ -479,7 +479,7 @@ G1 = table %>%
 G2 = table %>%
   drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  filter( Solver == "SISSY" ) %>%
   ggboxplot(x = "Solver",
             y = "SpaDis2", fill="Profile") +
   ylab("Spatial Dispersion [mm]") +
@@ -489,7 +489,7 @@ G2 = table %>%
 
 G3 = table %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  filter( Solver == "SISSY" ) %>%
   filter( AUROC_loc>0 ) %>%
   drop_na() %>%
   ggboxplot(x = "Solver",
@@ -502,7 +502,7 @@ G3 = table %>%
 G4 = table %>%
   drop_na() %>%
   filter( SNR=="30" ) %>%
-  filter( Solver != "Proposed" ) %>%
+  filter( Solver == "SISSY" ) %>%
   filter( AP_loc>0 ) %>%
   ggboxplot(x = "Solver",
             y = "AP_loc", fill="Profile") +
@@ -520,7 +520,7 @@ ggsave( paste0("shape_",tagname, "ALL", ".pdf"),
 
 vars_cor = table %>%
   drop_na() %>%
-  filter( SNR=="20" ) %>%
+  filter( SNR=="30" ) %>%
   select( "DLE1", "SpaDis2", "AUROC_loc", "AP_loc", "Depth" ) %>%
   correlate()
 
