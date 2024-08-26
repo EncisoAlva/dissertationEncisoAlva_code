@@ -31,6 +31,7 @@ info.SourceType = 'volume';
 
 info.nTrials    = 500;
 info.SNRvals    = [inf,30,20,0];
+for
 
 info.ProtocolFun   = 'Protocol04';
 
